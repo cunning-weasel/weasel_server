@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -14,32 +14,46 @@ int main()
     char resp[] = "HTTP/1.0 200 OK\r\n"
                   "Server: webserver-c\r\n"
                   "Content-type: text/html\r\n\r\n"
-                  "<html>weasel server says hi</html>\r\n";
+                  "<html>"
+                  "<head>"
+                  "<style>"
+                  "body {"
+                  "  background-color: darkslategray;"
+                  "  color: white;"
+                  "}"
+                  "</style>"
+                  "</head>"
+                  "<body>"
+                  "weasel-server"
+                  "</body>"
+                  "</html>\r\n";
 
-    // man 7 tcp
+    // man 2 socket
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
         // man perror
-        perror("webserver (socket) oopsie");
+        perror("webserver (socket)");
         return 1;
     }
-    printf("weasel socket created!!\n");
+    printf("socket created successfully\n");
 
-    // address to bind socket to
+    // man 2 socket
     struct sockaddr_in host_addr;
     int host_addrlen = sizeof(host_addr);
 
-    // man 7 ip
     host_addr.sin_family = AF_INET;
-    // man 3 hton
     host_addr.sin_port = htons(PORT);
     host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // create client address
+    struct sockaddr_in client_addr;
+    int client_addrlen = sizeof(client_addr);
 
     // man 2 bind
     if (bind(sockfd, (struct sockaddr *)&host_addr, host_addrlen) != 0)
     {
-        perror("webserver bind");
+        perror("webserver (bind)");
         return 1;
     }
     printf("socket successfully bound to address\n");
@@ -50,12 +64,13 @@ int main()
         perror("webserver (listen)");
         return 1;
     }
-    printf("server listening on http://localhost:8080/!\n");
+    printf("server listening for connections on: http://localhost:8080/ \n");
 
-    // man 2 accept
     for (;;)
     {
-        int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr, (socklen_t *)&host_addrlen);
+        // man 2 accept
+        int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr,
+                               (socklen_t *)&host_addrlen);
         if (newsockfd < 0)
         {
             perror("webserver (accept)");
@@ -63,7 +78,15 @@ int main()
         }
         printf("connection accepted\n");
 
-        // man 2 read
+        // get client address
+        int sockn = getsockname(newsockfd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addrlen);
+        if (sockn < 0)
+        {
+            perror("webserver (getsockname)");
+            continue;
+        }
+
+        // man 2 socket
         int valread = read(newsockfd, buffer, BUFFER_SIZE);
         if (valread < 0)
         {
@@ -71,27 +94,22 @@ int main()
             continue;
         }
 
+        // man 2 read
+        char method[BUFFER_SIZE], uri[BUFFER_SIZE], version[BUFFER_SIZE];
+        sscanf(buffer, "%s %s %s", method, uri, version);
+        printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
+
         // man 2 write
-        // TODO write custom strlen
+        // TODO develop custom strlen
         int valwrite = write(newsockfd, resp, strlen(resp));
         if (valwrite < 0)
         {
             perror("webserver (write)");
             continue;
         }
-
         // man 2 close
         close(newsockfd);
     }
 
     return 0;
 }
-
-// docs:
-// man 2 read
-// man 7 ip
-// man tcp 7
-// man socket 2
-
-// compile and link exec: gcc -o output_weasel_server weasel_server.c
-// run compiled file: ./output_weasel_server
