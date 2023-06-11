@@ -4,6 +4,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+// bring in resp string
+#include "index_html_string.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -11,22 +13,6 @@
 int main()
 {
     char buffer[BUFFER_SIZE];
-    char resp[] = "HTTP/1.0 200 OK\r\n"
-                  "Server: webserver-c\r\n"
-                  "Content-type: text/html\r\n\r\n"
-                  "<html>"
-                  "<head>"
-                  "<style>"
-                  "body {"
-                  "  background-color: darkslategray;"
-                  "  color: white;"
-                  "}"
-                  "</style>"
-                  "</head>"
-                  "<body>"
-                  "weasel-server"
-                  "</body>"
-                  "</html>\r\n";
 
     // man 2 socket
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -66,7 +52,7 @@ int main()
     }
     printf("server listening for connections on: http://localhost:8080/ \n");
 
-    for (;;)
+    while (1)
     {
         // man 2 accept
         int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr,
@@ -96,11 +82,12 @@ int main()
 
         // man 2 read
         char method[BUFFER_SIZE], uri[BUFFER_SIZE], version[BUFFER_SIZE];
+        // TODO develop custom sscanf
         sscanf(buffer, "%s %s %s", method, uri, version);
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        // TODO develop custom strlen
+        // TODO develop custom strlen - traverses string - trashes cache
         int valwrite = write(newsockfd, resp, strlen(resp));
         if (valwrite < 0)
         {
