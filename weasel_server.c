@@ -7,7 +7,7 @@
 // bring in resp string/ index
 #include "index_html_string.h"
 
-#define PORT 80
+#define PORT 8080
 #define BUFFER_SIZE 1024
 
 int main()
@@ -55,8 +55,7 @@ int main()
     while (1)
     {
         // man 2 accept
-        int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr,
-                               (socklen_t *)&host_addrlen);
+        int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr, (socklen_t *)&host_addrlen);
         if (newsockfd < 0)
         {
             perror("webserver (accept)");
