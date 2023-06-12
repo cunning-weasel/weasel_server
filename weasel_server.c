@@ -7,7 +7,7 @@
 // bring in resp string/ index
 #include "index_html_string.h"
 
-#define PORT 8080
+#define PORT 80
 #define BUFFER_SIZE 1024
 
 int main()
