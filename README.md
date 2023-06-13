@@ -1,4 +1,4 @@
-# weasel_server
+# weasel_server.c
 
 compile: gcc -o output_weasel_server weasel_server.c index_html_string.c
 
