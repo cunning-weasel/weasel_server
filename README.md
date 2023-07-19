@@ -8,4 +8,3 @@ run: ./output_weasel_server
 ssh into aws instance:
 ssh -i /path/to/key-pair.pem ec2-user@your-public-ipv4-dns
 
-wip
