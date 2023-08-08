@@ -4,11 +4,23 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-// bring in resp string/ index
+// bring in resp string/ index header
 #include "index_html_string.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
+
+// TODO develop custom strlen - currently traverses string and trashes cache
+// size_t string_len(char *string)
+// {
+//     char *p = string;
+
+//     while (*p != '\0')
+//     {
+//         p++;
+//     }
+//     return p - string; // num of chars advanced over
+// }
 
 int main()
 {
@@ -86,7 +98,7 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        // TODO develop custom strlen - traverses string - trashes cache
+        // int valwrite = write(newsockfd, resp, string_len(resp));
         int valwrite = write(newsockfd, resp, strlen(resp));
         if (valwrite < 0)
         {
