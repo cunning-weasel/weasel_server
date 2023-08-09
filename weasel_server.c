@@ -10,7 +10,8 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
-// TODO develop custom strlen - currently traverses string and trashes cache - done
+// custom strlen - doesn't traverses 
+// string and trashe cache anymore
 size_t weasel_len(char *string)
 {
     char *p = string;
