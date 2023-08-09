@@ -1,7 +1,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
-#include <string.h>
+// made custom <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 // bring in resp string/ index header
@@ -10,17 +10,19 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
-// TODO develop custom strlen - currently traverses string and trashes cache
-// size_t string_len(char *string)
-// {
-//     char *p = string;
+// TODO develop custom strlen - currently traverses string and trashes cache - done
+size_t weasel_len(char *string)
+{
+    char *p = string;
+    size_t len = 0;
 
-//     while (*p != '\0')
-//     {
-//         p++;
-//     }
-//     return p - string; // num of chars advanced over
-// }
+    while (*p != '\0')
+    {
+        len++;
+        p++;
+    }
+    return len;
+}
 
 int main()
 {
@@ -98,8 +100,8 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        // int valwrite = write(newsockfd, resp, string_len(resp));
-        int valwrite = write(newsockfd, resp, strlen(resp));
+        int valwrite = write(newsockfd, resp, weasel_len(resp));
+        // int valwrite = write(newsockfd, resp, strlen(resp));
         if (valwrite < 0)
         {
             perror("webserver (write)");
