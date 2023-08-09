@@ -10,7 +10,12 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
-// custom strlen - doesn't traverses 
+// TO-DO
+// add env vars and CD
+// add proxy/ something to deal with ssl
+// read html file instead of c string
+
+// custom strlen - doesn't traverse 
 // string and trashe cache anymore
 size_t weasel_len(char *string)
 {
