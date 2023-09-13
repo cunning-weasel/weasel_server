@@ -30,6 +30,37 @@ size_t weasel_len(char *string)
     return len;
 }
 
+size_t custom_strlen_cacher(char *str)
+{
+    static char *start = NULL;
+    static char *end = NULL;
+    size_t len = 0;
+    size_t cap = 5000; // 5kb
+
+    // if we have a cached string and current pointer is within it
+    if (start && str >= start && str <= end)
+    {
+        // calculate the new strlen
+        len = end - str;
+        // super-fast return!
+        return len;
+    }
+
+    // count the actual length
+    // we need at least one measurement of the large resp
+    len = weasel_len(str);
+
+    // if it's a really long string
+    // save its start and end addresses
+    if (len > cap)
+    {
+        start = str;
+        end = str + len;
+    }
+    // non-cached return
+    return len;
+}
+
 int main()
 {
     char buffer[BUFFER_SIZE];
@@ -106,7 +137,7 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        int valwrite = write(newsockfd, resp, weasel_len(resp));
+        int valwrite = write(newsockfd, resp, custom_strlen_cacher(resp));
         // int valwrite = write(newsockfd, resp, strlen(resp));
         if (valwrite < 0)
         {
