@@ -138,7 +138,6 @@ int main()
 
         // man 2 write
         int valwrite = write(newsockfd, resp, custom_strlen_cacher(resp));
-        // int valwrite = write(newsockfd, resp, strlen(resp));
         if (valwrite < 0)
         {
             perror("webserver (write)");
