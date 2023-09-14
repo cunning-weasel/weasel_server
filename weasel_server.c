@@ -15,7 +15,7 @@
 // add proxy/ something to deal with ssl
 // read html file instead of c string
 
-// custom strlen - doesn't traverse 
+// custom strlen - doesn't traverse
 // string and trashe cache anymore
 size_t weasel_len(char *string)
 {
@@ -46,12 +46,10 @@ size_t custom_strlen_cacher(char *str)
         return len;
     }
 
-    // count the actual length
-    // we need at least one measurement of the large resp
+    // count actual length
     len = weasel_len(str);
 
-    // if it's a really long string
-    // save its start and end addresses
+    // if it's a really long string, cache
     if (len > cap)
     {
         start = str;
