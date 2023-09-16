@@ -1,7 +1,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
-// made custom <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 // bring in resp string/ index header
@@ -22,7 +21,7 @@ size_t weasel_len(char *string)
     char *p = string;
     size_t len = 0;
 
-    while (*p != '\0')
+    while (*p)
     {
         len++;
         p++;
@@ -49,7 +48,7 @@ size_t custom_strlen_cacher(char *str)
     // count actual length
     len = weasel_len(str);
 
-    // if it's a really long string, cache
+    // cache
     if (len > cap)
     {
         start = str;
