@@ -14,8 +14,7 @@
 // add proxy/ something to deal with ssl
 // read html file instead of c string
 
-// custom strlen - doesn't traverse
-// string and trashe cache anymore
+// custom strlen doesn't cache
 size_t weasel_len(char *string)
 {
     char *p = string;
@@ -29,6 +28,7 @@ size_t weasel_len(char *string)
     return len;
 }
 
+// cache a single item
 size_t custom_strlen_cacher(char *str)
 {
     static char *start = NULL;
