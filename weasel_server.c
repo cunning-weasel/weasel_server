@@ -18,7 +18,8 @@ TO-DO
 remove nginx
 read html file instead of c string
 blog articles end-point
-add env vars and CD
+pagination
+CD
 */
 
 SSL_CTX *create_context()
@@ -53,7 +54,7 @@ void configure_context(SSL_CTX *ctx)
     }
 }
 
-// std lib strlen trashes cache
+// std strlen trashes cache
 size_t weasel_len(char *string)
 {
     char *p = string;
@@ -92,8 +93,51 @@ size_t custom_strlen_cacher(char *str)
         start = str;
         end = str + len;
     }
-    // non-cached return
+    // un-cached return
     return len;
+}
+
+// reuseable read file func
+// ...
+void serve_file(char file_path, SSL *ssl)
+{
+    FILE *fp = fopen(file_path, "rb");
+
+    if (!fp)
+    {
+        // SSL_write 404 if not found
+    }
+    // file size
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    char http_headers[256];
+    snprintf(http_headers, custom_strlen_cacher(http_headers), "HTTP/1.0 200 OK\r\n"
+                                                               "Server: webserver-c\r\n"
+                                                               "Content-Length: %ld\r\n"
+                                                               "Content-Type: text/html; charset=utf-8\r\n\r\n",
+            file_size);
+    SSL_write(ssl, http_headers, custom_strlen_cacher(http_headers));
+
+    // read and send the file content in chunks
+    char buffer[BUFFER_SIZE];
+    size_t bytes_read;
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), fp)) > 0)
+    {
+        SSL_write(ssl, buffer, bytes_read);
+    }
+    // close file
+    fclose(fp);
+}
+
+void serve_blog_article(char *article_path, SSL *ssl)
+{
+    // file path based on article_path
+    char file_path[256]; // buffer
+    snprintf(file_path, custom_strlen_cacher(file_path), "blog/%s.md", article_path);
+
+    serve_file(file_path, ssl);
 }
 
 int main()
@@ -145,7 +189,7 @@ int main()
         perror("webserver (listen)");
         return 1;
     }
-    printf("server listening for connections on: http://localhost:8080/ \n");
+    printf("server listening for connections on: https://localhost:8080 \n");
 
     while (1)
     {
@@ -163,7 +207,6 @@ int main()
 
         // man 2 accept
         int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr, (socklen_t *)&host_addrlen);
-
         SSL_set_fd(ssl, newsockfd);
 
         if (newsockfd < 0)
@@ -182,9 +225,13 @@ int main()
         }
 
         // man 2 socket
-        int valread = SSL_read(ssl, buffer, BUFFER_SIZE);
         // int valread = read(newsockfd, buffer, BUFFER_SIZE);
-        // compare paths here to serve blog, 404 etc
+        int valread = SSL_read(ssl, buffer, BUFFER_SIZE);
+
+        /*
+         compare paths here to serve blog, 404 etc
+        */
+
         if (valread < 0)
         {
             perror("ssl (read)");
@@ -198,8 +245,8 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
         // int valwrite = write(newsockfd, resp, custom_str_len(resp));
+        int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
         if (valwrite < 0)
         {
             perror("sll (write)");
