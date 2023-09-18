@@ -97,59 +97,59 @@ size_t custom_strlen_cacher(char *str)
     return len;
 }
 
-// str structs
-typedef struct cust_str
-{
-    char *data;
-    size_t len;
-} cust_str;
+// // str structs
+// typedef struct cust_str
+// {
+//     char *data;
+//     size_t len;
+// } cust_str;
 
-// str structs heavy
-typedef struct cust_str_struct_buf
-{
-    char *size;
-    size_t len;
-    size_t cap;
-    allocator_cb allocator; // as in caching or mem alloc?
-} cust_str_struct_buf;
+// // str structs heavy
+// typedef struct cust_str_struct_buf
+// {
+//     char *size;
+//     size_t len;
+//     size_t cap;
+//     allocator_cb allocator; // as in caching or mem alloc?
+// } cust_str_struct_buf;
 
-cust_str_struct_buf cust_str_struct_buf_make(size_t len, allocator_cb allocator);
-void cust_str_struct_buf_append(cust_str_struct_buf *, str);
+// cust_str_struct_buf cust_str_struct_buf_make(size_t len, allocator_cb allocator);
+// void cust_str_struct_buf_append(cust_str_struct_buf *, str);
 
 
 // reuseable read file func
 // ...
-void serve_file(char file_path, SSL *ssl)
-{
-    FILE *fp = fopen(file_path, "rb");
+// void serve_file(char file_path, SSL *ssl)
+// {
+//     FILE *fp = fopen(file_path, "rb");
 
-    if (!fp)
-    {
-        // SSL_write 404 if not found
-    }
-    // file size
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+//     if (!fp)
+//     {
+//         // SSL_write 404 if not found
+//     }
+//     // file size
+//     fseek(fp, 0, SEEK_END);
+//     long file_size = ftell(fp);
+//     fseek(fp, 0, SEEK_SET);
 
-    char http_headers[256];
-    snprintf(http_headers, custom_strlen_cacher(http_headers), "HTTP/1.0 200 OK\r\n"
-                                                               "Server: webserver-c\r\n"
-                                                               "Content-Length: %ld\r\n"
-                                                               "Content-Type: text/html; charset=utf-8\r\n\r\n",
-            file_size);
-    SSL_write(ssl, http_headers, custom_strlen_cacher(http_headers));
+//     char http_headers[256];
+//     snprintf(http_headers, custom_strlen_cacher(http_headers), "HTTP/1.0 200 OK\r\n"
+//                                                                "Server: webserver-c\r\n"
+//                                                                "Content-Length: %ld\r\n"
+//                                                                "Content-Type: text/html; charset=utf-8\r\n\r\n",
+//             file_size);
+//     SSL_write(ssl, http_headers, custom_strlen_cacher(http_headers));
 
-    // read and send the file content in chunks
-    char buffer[BUFFER_SIZE];
-    size_t bytes_read;
-    while ((bytes_read = fread(buffer, 1, sizeof(buffer), fp)) > 0)
-    {
-        SSL_write(ssl, buffer, bytes_read);
-    }
-    // close file
-    fclose(fp);
-}
+//     // read and send the file content in chunks
+//     char buffer[BUFFER_SIZE];
+//     size_t bytes_read;
+//     while ((bytes_read = fread(buffer, 1, sizeof(buffer), fp)) > 0)
+//     {
+//         SSL_write(ssl, buffer, bytes_read);
+//     }
+//     // close file
+//     fclose(fp);
+// }
 
 // void serve_web_files(char *article_path, SSL *ssl)
 // {
@@ -160,14 +160,14 @@ void serve_file(char file_path, SSL *ssl)
 //     serve_file(file_path, ssl);
 // }
 
-void serve_blog_article(char *article_path, SSL *ssl)
-{
-    // file path based on article_path
-    char file_path[256]; // buffer
-    snprintf(file_path, custom_strlen_cacher(file_path), "blog/%s.md", article_path);
+// void serve_blog_article(char *article_path, SSL *ssl)
+// {
+//     // file path based on article_path
+//     char file_path[256]; // buffer
+//     snprintf(file_path, custom_strlen_cacher(file_path), "blog/%s.md", article_path);
 
-    serve_file(file_path, ssl);
-}
+//     serve_file(file_path, ssl);
+// }
 
 int main()
 {
