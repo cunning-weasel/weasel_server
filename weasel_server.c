@@ -97,6 +97,26 @@ size_t custom_strlen_cacher(char *str)
     return len;
 }
 
+// str structs
+typedef struct cust_str
+{
+    char *data;
+    size_t len;
+} cust_str;
+
+// str structs heavy
+typedef struct cust_str_struct_buf
+{
+    char *size;
+    size_t len;
+    size_t cap;
+    allocator_cb allocator; // as in caching or mem alloc?
+} cust_str_struct_buf;
+
+cust_str_struct_buf cust_str_struct_buf_make(size_t len, allocator_cb allocator);
+void cust_str_struct_buf_append(cust_str_struct_buf *, str);
+
+
 // reuseable read file func
 // ...
 void serve_file(char file_path, SSL *ssl)
@@ -130,6 +150,15 @@ void serve_file(char file_path, SSL *ssl)
     // close file
     fclose(fp);
 }
+
+// void serve_web_files(char *article_path, SSL *ssl)
+// {
+//     // file path based on article_path
+//     char file_path[256]; // buffer
+//     snprintf(file_path, custom_strlen_cacher(file_path), "blog/%s.md", article_path);
+
+//     serve_file(file_path, ssl);
+// }
 
 void serve_blog_article(char *article_path, SSL *ssl)
 {
