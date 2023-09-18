@@ -1,6 +1,9 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
+
+#include <stdlib.h>
+
 #include <sys/socket.h>
 #include <unistd.h>
 #include <openssl/bio.h>
@@ -94,6 +97,36 @@ size_t custom_strlen_cacher(char *str)
     }
     // un-cached return
     return len;
+}
+
+// file reads
+char *read_file(char *file_path)
+{
+    FILE *fp;
+    fp = fopen(file_path, "r");
+    if (fp == NULL)
+    {
+        printf("error opening file");
+        return NULL;
+    }
+    // determine the file size
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    // alloc file_content
+    char *file_content = (char *)malloc(file_size + 1);
+    if (file_content == NULL)
+    {
+        fclose(fp);
+        printf("alloc error :/");
+        return NULL;
+    }
+    // read the file into file_content buffer
+    size_t bytes_read = fread(file_content, 1, file_size, fp);
+    file_content[bytes_read] = '\0';
+
+    fclose(fp);
+    return file_content;
 }
 
 int main()
@@ -201,13 +234,30 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        // int valwrite = write(newsockfd, resp, custom_str_len(resp));
-        int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
-        if (valwrite < 0)
+        char *result_file_content = read_file("index/home.html");
+        if (result_file_content != NULL)
         {
-            perror("sll (write)");
+            int valwrite = SSL_write(ssl, result_file_content, custom_strlen_cacher(result_file_content));
+            if (valwrite < 0)
+            {
+                perror("sll (write) error");
+                continue;
+            }
+            free(result_file_content);
+        }
+        else
+        {
+            printf("file not found?");
             continue;
         }
+
+        // // int valwrite = write(newsockfd, resp, custom_str_len(resp));
+        // int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
+        // if (valwrite < 0)
+        // {
+        //     perror("sll (write)");
+        //     continue;
+        // }
 
         SSL_shutdown(ssl);
         SSL_free(ssl);
