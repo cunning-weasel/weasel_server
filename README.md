@@ -10,7 +10,7 @@ debug w/ openssl:
 gcc -o output_weasel_server weasel_server.c index_html_string.c -Wall -Wextra -Wpedantic -Og -g3 -fsanitize=address,undefined -lssl -lcrypto
 
 executable(for prod):
--Wall -Wextra -Wpedantic -Werror -O2 i.e: gcc -o output_weasel_server weasel_server.c index_html_string.c -Wall -Wextra -Wpedantic -Werror -O2
+-Wall -Wextra -Wpedantic -Werror -O2 i.e: gcc -o output_weasel_server weasel_server.c index_html_string.c -Wall -Wextra -Wpedantic -Werror -O2 -lssl -lcrypto
 
 run: ./output_weasel_server
 
