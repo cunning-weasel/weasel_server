@@ -100,34 +100,34 @@ size_t custom_strlen_cacher(char *str)
 }
 
 // file reads
-// char *read_file(char *file_path)
-// {
-//     FILE *fp;
-//     fp = fopen(file_path, "r");
-//     if (fp == NULL)
-//     {
-//         printf("error opening file");
-//         return NULL;
-//     }
-//     // determine the file size
-//     fseek(fp, 0, SEEK_END);
-//     long file_size = ftell(fp);
-//     fseek(fp, 0, SEEK_SET);
-//     // alloc file_content
-//     char *file_content = (char *)malloc(file_size + 1);
-//     if (file_content == NULL)
-//     {
-//         fclose(fp);
-//         printf("alloc error :/");
-//         return NULL;
-//     }
-//     // read the file into file_content buffer
-//     size_t bytes_read = fread(file_content, 1, file_size, fp);
-//     file_content[bytes_read] = '\0';
+char *read_file(char *file_path)
+{
+    FILE *fp;
+    fp = fopen(file_path, "r");
+    if (fp == NULL)
+    {
+        printf("error opening file");
+        return NULL;
+    }
+    // determine the file size
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    // alloc file_content
+    char *file_content = (char *)malloc(file_size + 1);
+    if (file_content == NULL)
+    {
+        fclose(fp);
+        printf("alloc error :/");
+        return NULL;
+    }
+    // read the file into file_content buffer
+    size_t bytes_read = fread(file_content, 1, file_size, fp);
+    file_content[bytes_read] = '\0';
 
-//     fclose(fp);
-//     return file_content;
-// }
+    fclose(fp);
+    return file_content;
+}
 
 int main()
 {
@@ -234,30 +234,27 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        // char *result_file_content = read_file("index/home.html");
-        // if (result_file_content != NULL)
-        // {
-        //     int valwrite = SSL_write(ssl, result_file_content, custom_strlen_cacher(result_file_content));
-        //     if (valwrite < 0)
-        //     {
-        //         perror("sll (write) error");
-        //         continue;
-        //     }
-        //     free(result_file_content);
-        // }
-        // else
-        // {
-        //     printf("file not found?");
-        //     continue;
-        // }
+        char *result_file_content = read_file("index/home.html");
+        if (result_file_content == NULL)
+        {
+            printf("file not found?");
+        }
 
-        // int valwrite = write(newsockfd, resp, custom_str_len(resp));
-        int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
+        int valwrite = SSL_write(ssl, result_file_content, custom_strlen_cacher(result_file_content));
         if (valwrite < 0)
         {
-            perror("sll (write)");
+            perror("sll (write) error");
             continue;
         }
+        free(result_file_content);
+
+        // // int valwrite = write(newsockfd, resp, custom_str_len(resp));
+        // int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
+        // if (valwrite < 0)
+        // {
+        //     perror("sll (write)");
+        //     continue;
+        // }
 
         SSL_shutdown(ssl);
         SSL_free(ssl);

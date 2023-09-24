@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
         (repo.description && repo.description.toLowerCase().includes(searchStr))
       );
     });
-
     showRepos(filteredRepos);
   });
 
@@ -54,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
     repoList.innerHTML = htmlString;
   };
-
   pullRepos();
 });
 
