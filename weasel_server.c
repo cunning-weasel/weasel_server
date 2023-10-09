@@ -1,9 +1,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <sys/socket.h>
 #include <unistd.h>
 #include <openssl/bio.h>
@@ -17,7 +15,7 @@
 
 /*
 TO-DO
-blog articles end-point
+blog articles end-point - handle different files
 back-end pagination
 CD
 */
@@ -101,6 +99,11 @@ void send_http_resp_header(SSL *ssl, int content_len)
     char header[1024];
     sprintf(header, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n", content_len);
     SSL_write(ssl, header, custom_strlen_cacher(header));
+    // handle different file types
+    // if (strcmp(file_extension, ".md") == 0)
+    // {
+    //     sprintf(header, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+    // }
 }
 
 // file reads
@@ -111,6 +114,8 @@ char *read_file()
     // read x bytes at a time - need to benchmark
     int bytes;
     int chunk = 5000;
+
+    // handle different file types
 
     FILE *fp = fopen("index/home.html", "r");
     if (fp)
@@ -231,9 +236,12 @@ int main()
         char *resp = read_file();
         if (resp)
         {
-            int content_len = custom_strlen_cacher(resp);
+            // handle different file types
+            // const char *file_extension = strrchr("index/blog/June2023.md", '.');
+            // send_http_resp_header(ssl, file_extension);
+
             // send resp header first
-            send_http_resp_header(ssl, content_len);
+            send_http_resp_header(ssl, custom_strlen_cacher(resp));
 
             int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
             if (valwrite < 0)
@@ -241,7 +249,7 @@ int main()
                 perror("sll (write)");
                 continue;
             }
-            printf("write on ssl success\n");
+            printf("ssl (write): Success\n");
         }
         SSL_shutdown(ssl);
         SSL_free(ssl);

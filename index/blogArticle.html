@@ -4,9 +4,72 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="script.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            background-color: #1b2733;
+            color: darkgray;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 1.6rem;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* header anchor tag */
+        .headerA {
+            text-decoration: none;
+        }
+
+        a {
+            color: darkgray;
+        }
+
+        .seperator {
+            width: auto;
+            border-top: 1px solid rgba(236, 233, 230, 0.15);
+            top: 0;
+            margin: 1rem;
+            position: relative;
+        }
+
+        /* links in footer */
+        .links {
+            margin: 20px;
+        }
+
+        .links a {
+            display: inline-block;
+            margin: 10px;
+            color: slategray;
+            text-decoration: none;
+        }
+    </style>
+    <script defer>
+        "use strict";
+        // needs to be publish date - some static var
+        const currentDate = new Date(Date.now());
+
+        const dateFormat = {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        };
+
+        const formattedDate = new Intl.DateTimeFormat("en-US", dateFormat).format(
+            currentDate
+        );
+
+        document.getElementById("currentDate").textContent = formattedDate;
+
+        // pass endpoints from above
+        document.getElementById("content").innerHTML = marked.parse(
+            "# Article title goes here\n\nRest of the text and some **bold** sample all written in .md and rendered to html with marked."
+        );
+    </script>
     <link rel="icon" href="🦦" type="image/x-icon" />
     <title>Article-title</title>
 </head>
@@ -43,10 +106,11 @@
                 <a href="https://www.linkedin.com/in/paul-bongers" target="_blank">LinkedIn 👨‍💻</a>
                 <a href="mailto:paulbongers22@gmail.com">Email 📤</a>
             </div>
-            <p style="color: darkgray">{ built with vanilla c, hosted on AWS }</p>
+            <!-- <p style="color: darkgray">{ built with vanilla c, hosted on AWS }</p> -->
     </div>
     </footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 
 </html>

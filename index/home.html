@@ -3,8 +3,206 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="script.js" defer></script>
+    <style>
+      body {
+        background-color: #1b2733;
+        color: darkgray;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 16px;
+        text-align: center;
+      }
+
+      .container {
+        padding: 1.6rem;
+        max-width: 650px;
+        margin: 0 auto;
+      }
+
+      /* header anchor tag */
+      .headerA {
+        text-decoration: none;
+      }
+
+      a {
+        color: darkgray;
+      }
+
+      .seperator {
+        width: auto;
+        border-top: 1px solid rgba(236, 233, 230, 0.15);
+        top: 0;
+        margin: 1rem;
+        position: relative;
+      }
+
+      .searchBox {
+        margin-bottom: 2em;
+        padding: 0.65em 1em;
+        background: rgb(27, 39, 51);
+        border: 1px solid rgba(236, 233, 230, 0.15);
+        border-radius: 1.5em;
+        color: darkgray;
+      }
+
+      .card {
+        background-color: #1b2733;
+        color: #ffffff;
+        padding: 1.5em;
+        border: 1px solid rgba(236, 233, 230, 0.15);
+        border-radius: 0.2em;
+        box-shadow: 5px 5px 7px rgba(0, 0, 0, 0.15);
+        margin-bottom: 1.25em;
+      }
+
+      .card:hover {
+        transform: translateX(1px) translateY(1px);
+      }
+
+      .card h2 {
+        margin-top: 0;
+        font-size: 20px;
+      }
+
+      .card p {
+        margin-bottom: 1.5em;
+      }
+
+      .card a {
+        color: darkgray;
+        padding: 0.65em 0.8em;
+        border: 1px solid darkgray;
+      }
+
+      /* general btns */
+      .btn {
+        font-size: 0.75rem;
+        padding: 0.65em 0.8em;
+        color: darkgray;
+        border: 1px solid #ffffff;
+        border-radius: 3rem;
+        text-decoration: none;
+        color: #ffffff;
+      }
+
+      /* see more posts btn */
+      .seeMorePosts {
+        margin-top: 2em;
+      }
+
+      /* links in footer */
+      .links {
+        margin: 20px;
+      }
+
+      .links a {
+        display: inline-block;
+        margin: 10px;
+        color: slategray;
+        text-decoration: none;
+      }
+    </style>
+    <script defer>
+      "use strict";
+      // change up for server endpoints
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.querySelector(".searchBox");
+        searchInput.disabled = true;
+        let repoList = document.querySelector("#repos");
+        let repos = [];
+
+        searchInput.addEventListener("keyup", (e) => {
+          const searchStr = e.target.value.toLowerCase();
+          const filteredRepos = repos.filter((repo) => {
+            return (
+              repo.name.toLowerCase().includes(searchStr) ||
+              (repo.language &&
+                repo.language.toLowerCase().includes(searchStr)) ||
+              (repo.description &&
+                repo.description.toLowerCase().includes(searchStr))
+            );
+          });
+          showRepos(filteredRepos);
+        });
+
+        const pullRepos = async () => {
+          try {
+            const api_url = "https://api.github.com/users/cunning-weasel/repos";
+            const res = await fetch(api_url);
+            repos = await res.json();
+            showRepos(repos);
+            searchInput.disabled = false;
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
+        const showRepos = (repos) => {
+          const htmlString = repos
+            .map((repo) => {
+              return `
+        <div class="card">
+            <div class="card-container">
+                <div>
+                    <p>${repo.language}</p>
+                </div>
+                <h2>${repo.name}</h2>
+            </div>
+                <div>
+                    <p>${repo.description}</p>
+                </div>
+                <div>
+                    <a href="${repo.homepage}" class="btn">Read more</a>
+                </div>
+        </div>
+          `;
+            })
+            .join("");
+          repoList.innerHTML = htmlString;
+        };
+        pullRepos();
+      });
+
+      // begin file read ish
+
+      // async function* getFilesRecursively(entry) {
+      //   if (entry.kind === "file") {
+      //     const file = await entry.getFile();
+      //     if (file !== null) {
+      //       file.relativePath = getRelativePath(entry);
+      //       yield file;
+      //     }
+      //   } else if (entry.kind === "directory") {
+      //     for await (const handle of entry.values()) {
+      //       yield* getFilesRecursively(handle);
+      //     }
+      //   }
+      // }
+      // for await (const fileHandle of getFilesRecursively(directoryHandle)) {
+      //   console.log(fileHandle);
+      // }
+
+      // getFilesRecursively("blog");
+
+      // needs to be publish date - some static var
+      const currentDate = new Date(Date.now());
+
+      const dateFormat = {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      };
+
+      const formattedDate = new Intl.DateTimeFormat("en-US", dateFormat).format(
+        currentDate
+      );
+
+      document.getElementById("currentDate").textContent = formattedDate;
+
+      // pass endpoints from above
+      document.getElementById("content").innerHTML = marked.parse(
+        "# Article title goes here\n\nRest of the text and some **bold** sample all written in .md and rendered to html with marked."
+      );
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="icon" href="🦦" type="image/x-icon" />
     <title>Paul Simba' Bongers</title>
@@ -62,7 +260,7 @@
         >
         <a href="mailto:paulbongers22@gmail.com">Email 📤</a>
       </footer>
-      <!-- <p style="color: darkgray">{ built with vanilla c, hosted on my Pico }</p> -->
+      <p style="color: darkgray">{ built with vanilla c, hosted on my Pico }</p>
     </div>
   </body>
 </html>
