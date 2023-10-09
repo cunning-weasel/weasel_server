@@ -14,11 +14,11 @@
 #include "index_html_string.h"
 
 #define PORT 8080
-#define BUFFER_SIZE 1024
+// #define BUFFER_SIZE 1024
+#define BUFFER_SIZE 8024
 
 /*
 TO-DO
-remove nginx
 read html file instead of c string
 blog articles end-point
 back-end pagination
@@ -76,7 +76,7 @@ size_t custom_strlen_cacher(char *str)
     static char *start = NULL;
     static char *end = NULL;
     size_t len = 0;
-    size_t cap = 5000; // 5kb
+    size_t cap = 20000; // 20kb
 
     // str is cached and current pointer is within it
     if (start && str >= start && str <= end)
@@ -99,34 +99,37 @@ size_t custom_strlen_cacher(char *str)
     return len;
 }
 
-// file reads
-char *read_file(char *file_path)
+void send_http_resp_header(SSL *ssl, int content_len)
 {
-    FILE *fp;
-    fp = fopen(file_path, "r");
-    if (fp == NULL)
-    {
-        printf("error opening file");
-        return NULL;
-    }
-    // determine the file size
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    // alloc file_content
-    char *file_content = (char *)malloc(file_size + 1);
-    if (file_content == NULL)
-    {
-        fclose(fp);
-        printf("alloc error :/");
-        return NULL;
-    }
-    // read the file into file_content buffer
-    size_t bytes_read = fread(file_content, 1, file_size, fp);
-    file_content[bytes_read] = '\0';
+    char header[1024];
+    sprintf(header, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n", content_len);
+    SSL_write(ssl, header, custom_strlen_cacher(header));
+}
 
-    fclose(fp);
-    return file_content;
+// file reads
+char *read_file()
+{
+    static char buffer[BUFFER_SIZE];
+    char *current = buffer;
+    // read x bytes at a time - need to benchmark
+    int bytes;
+    int chunk = 5000;
+
+    FILE *fp = fopen("index/home.html", "r");
+    if (fp)
+    {
+        do
+        {
+            bytes = fread(current, sizeof(char), chunk, fp);
+            current += bytes;
+        } while (bytes == chunk);
+        fclose(fp);
+        // terminate buffer so string funcs work
+        *current = '\0';
+        // printf("%s", buffer);
+        return buffer;
+    }
+    return NULL;
 }
 
 int main()
@@ -214,13 +217,7 @@ int main()
         }
 
         // man 2 socket
-        // int valread = read(newsockfd, buffer, BUFFER_SIZE);
         int valread = SSL_read(ssl, buffer, BUFFER_SIZE);
-
-        /*
-         compare paths here to serve blog, 404 etc
-        */
-
         if (valread < 0)
         {
             perror("ssl (read)");
@@ -234,28 +231,21 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
         // man 2 write
-        char *result_file_content = read_file("index/home.html");
-        if (result_file_content == NULL)
+        char *resp = read_file();
+        if (resp)
         {
-            printf("file not found?");
+            int content_len = custom_strlen_cacher(resp);
+            // send resp header first
+            send_http_resp_header(ssl, content_len);
+
+            int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
+            if (valwrite < 0)
+            {
+                perror("sll (write)");
+                continue;
+            }
+            printf("write on ssl success\n");
         }
-
-        int valwrite = SSL_write(ssl, result_file_content, custom_strlen_cacher(result_file_content));
-        if (valwrite < 0)
-        {
-            perror("sll (write) error");
-            continue;
-        }
-        free(result_file_content);
-
-        // // int valwrite = write(newsockfd, resp, custom_str_len(resp));
-        // int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
-        // if (valwrite < 0)
-        // {
-        //     perror("sll (write)");
-        //     continue;
-        // }
-
         SSL_shutdown(ssl);
         SSL_free(ssl);
         // man 2 close

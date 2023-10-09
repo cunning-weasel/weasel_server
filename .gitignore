@@ -1,5 +1,5 @@
+# not on prod + elf-signed - knock yourselves out hackers ;)
 cert.pem
 key.pem
-# not on prod - doesn't matter if exposed to GH
 
 output_weasel_server
