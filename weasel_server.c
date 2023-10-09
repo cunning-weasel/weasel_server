@@ -10,8 +10,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <signal.h>
-// resp string/ index header
-#include "index_html_string.h"
 
 #define PORT 8080
 // #define BUFFER_SIZE 1024
@@ -19,7 +17,6 @@
 
 /*
 TO-DO
-read html file instead of c string
 blog articles end-point
 back-end pagination
 CD
