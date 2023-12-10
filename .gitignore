@@ -1,5 +1,3 @@
-# not on prod + elf-signed - knock yourselves out hackers ;)
-cert.pem
-key.pem
-
 output_weasel_server
+
+index.*

@@ -4,54 +4,13 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include <signal.h>
+#include <string.h>
 
 #define PORT 8080
-// #define BUFFER_SIZE 1024
-#define BUFFER_SIZE 8024
+#define BUFFER_SIZE 6000000
+#define PATH_MAX 4096
 
-/*
-TO-DO
-blog articles end-point - handle different files
-back-end pagination
-CD
-*/
-
-SSL_CTX *create_context()
-{
-    const SSL_METHOD *method;
-    SSL_CTX *ctx;
-    method = TLS_server_method();
-
-    ctx = SSL_CTX_new(method);
-    if (!ctx)
-    {
-        perror("Unable to create SSL context master weasel");
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-    return ctx;
-}
-
-void configure_context(SSL_CTX *ctx)
-{
-    if (SSL_CTX_use_certificate_file(ctx, "cert.pem", SSL_FILETYPE_PEM) <= 0)
-    {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM) <= 0)
-    {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-}
-
-// std strlen trashes cache
 size_t weasel_len(char *string)
 {
     char *p = string;
@@ -65,99 +24,151 @@ size_t weasel_len(char *string)
     return len;
 }
 
-// cache a single item
 size_t custom_strlen_cacher(char *str)
 {
     static char *start = NULL;
     static char *end = NULL;
     size_t len = 0;
-    size_t cap = 20000; // 20kb
+    size_t cap = 250000;
 
-    // str is cached and current pointer is within it
     if (start && str >= start && str <= end)
     {
-        // calc new strlen
         len = end - str;
         return len;
     }
 
-    // calc actual length
     len = weasel_len(str);
 
-    // do cache
     if (len > cap)
     {
         start = str;
         end = str + len;
     }
-    // un-cached return
+
     return len;
 }
 
-void send_http_resp_header(SSL *ssl, int content_len)
+void send_full_res(int newsockfd, char *content, char *content_type, size_t content_length)
 {
     char header[1024];
-    sprintf(header, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n", content_len);
-    SSL_write(ssl, header, custom_strlen_cacher(header));
-    // handle different file types
-    // if (strcmp(file_extension, ".md") == 0)
-    // {
-    //     sprintf(header, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-    // }
+    snprintf(header, sizeof(header),
+             "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %zu\r\n\r\n",
+             content_type, content_length);
+
+    int valwrite = write(newsockfd, header, custom_strlen_cacher(header));
+    if (valwrite < 0)
+    {
+        perror("write");
+        return;
+    }
+
+    valwrite = write(newsockfd, content, content_length);
+    if (valwrite < 0)
+    {
+        perror("write");
+        return;
+    }
 }
 
-// file reads
-char *read_file()
+// TO-DO roll own filetype and handlers
+void read_file(int newsockfd, char *uri)
 {
-    static char buffer[BUFFER_SIZE];
-    char *current = buffer;
-    // read x bytes at a time - need to benchmark
-    int bytes;
-    int chunk = 5000;
+    if (custom_strlen_cacher(uri) == 0 || (custom_strlen_cacher(uri) == 1 && uri[0] == '/'))
+    {
+        strcpy(uri, "/index.html");
+    }
 
-    // handle different file types
+    if (uri[0] != '/')
+    {
+        char temp_uri[BUFFER_SIZE];
+        snprintf(temp_uri, sizeof(temp_uri), "/%s", uri);
+        strcpy(uri, temp_uri);
+    }
 
-    FILE *fp = fopen("index/home.html", "r");
+    char filepath[PATH_MAX];
+    snprintf(filepath, sizeof(filepath), "index%s", uri);
+
+    FILE *fp = fopen(filepath, "rb");
     if (fp)
     {
-        do
+        // determine the file size
+        fseek(fp, 0, SEEK_END);
+        size_t file_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+
+        // alloc buffer for entire file
+        // cast void pointer returned by malloc to char pointer
+        // TO-DO roll own malloc/ arena
+        char *buffer = (char *)malloc(file_size);
+        if (!buffer)
         {
-            bytes = fread(current, sizeof(char), chunk, fp);
-            current += bytes;
-        } while (bytes == chunk);
+            perror("malloc");
+            fclose(fp);
+            return;
+        }
+
+        // read entire file into mem
+        size_t bytes_read = fread(buffer, 1, file_size, fp);
         fclose(fp);
-        // terminate buffer so string funcs work
-        *current = '\0';
-        // printf("%s", buffer);
-        return buffer;
+
+        if (bytes_read != file_size)
+        {
+            perror("fread");
+            free(buffer);
+            return;
+        }
+
+        char *content_type;
+        if (strstr(uri, ".wasm"))
+        {
+            content_type = "application/wasm";
+        }
+        else if (strstr(uri, ".js"))
+        {
+            content_type = "text/javascript";
+        }
+        else
+        {
+            content_type = "text/html";
+        }
+
+        send_full_res(newsockfd, buffer, content_type, file_size);
+
+        free(buffer);
     }
-    return NULL;
+    else
+    {
+        perror("fopen");
+    }
 }
 
 int main()
 {
-    char buffer[BUFFER_SIZE];
+    char *buffer = (char *)malloc(BUFFER_SIZE);
+    if (!buffer)
+    {
+        perror("malloc");
+        return 1;
+    }
 
-    SSL_CTX *ctx;
-    SSL *ssl;
-    SSL_library_init();
-
-    ctx = create_context();
-    configure_context(ctx);
-    // ignore broken pipe signals
-    signal(SIGPIPE, SIG_IGN);
-
-    // man 2 socket
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
     if (sockfd == -1)
     {
-        // man perror
         perror("webserver (socket)");
+        free(buffer);
         return 1;
     }
     printf("socket created successfully\n");
 
-    // man 2 socket
+    int enable = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        free(buffer);
+        return 1;
+    }
+
     struct sockaddr_in host_addr;
     int host_addrlen = sizeof(host_addr);
 
@@ -165,101 +176,77 @@ int main()
     host_addr.sin_port = htons(PORT);
     host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    // create client address
     struct sockaddr_in client_addr;
-    int client_addrlen = sizeof(client_addr);
 
-    // man 2 bind
     if (bind(sockfd, (struct sockaddr *)&host_addr, host_addrlen) != 0)
     {
         perror("webserver (bind)");
+        free(buffer);
         return 1;
     }
     printf("socket successfully bound to address\n");
 
-    // man 2 listen
     if (listen(sockfd, SOMAXCONN) != 0)
     {
         perror("webserver (listen)");
+        free(buffer);
         return 1;
     }
-    printf("server listening for connections on: https://localhost:8080 \n");
+    printf("server listening for connections on: http://localhost:8080 \n");
 
     while (1)
     {
-        ssl = SSL_new(ctx);
-        // BIO pair needed for reading and writing
-        BIO *ssl_bio_read = BIO_new(BIO_s_mem());
-        BIO *ssl_bio_write = BIO_new(BIO_s_mem());
-
-        SSL_set_bio(ssl, ssl_bio_read, ssl_bio_write);
-
-        if (SSL_accept(ssl) <= 0)
-        {
-            ERR_print_errors_fp(stderr);
-        }
-
-        // man 2 accept
         int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr, (socklen_t *)&host_addrlen);
-        SSL_set_fd(ssl, newsockfd);
 
         if (newsockfd < 0)
         {
-            perror("webserver (accept) / ssl (set)");
+            perror("webserver (accept) / set");
             continue;
         }
-        printf("connection accepted and ssl set\n");
+        printf("connection accepted and set\n");
 
-        // get client address
-        int sockn = getsockname(newsockfd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addrlen);
-        if (sockn < 0)
-        {
-            perror("webserver (getsockname)");
-            continue;
-        }
+        client_addr.sin_family = AF_INET;
+        client_addr.sin_port = htons(PORT);
+        client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-        // man 2 socket
-        int valread = SSL_read(ssl, buffer, BUFFER_SIZE);
+        int valread = read(newsockfd, buffer, BUFFER_SIZE);
         if (valread < 0)
         {
-            perror("ssl (read)");
+            perror("read");
+            close(newsockfd);
             continue;
         }
 
-        // man 2 read
-        char method[BUFFER_SIZE], uri[BUFFER_SIZE], version[BUFFER_SIZE];
+        char *method = malloc(BUFFER_SIZE);
+        char *uri = malloc(BUFFER_SIZE);
+        char *version = malloc(BUFFER_SIZE);
+
+        if (!method || !uri || !version)
+        {
+            perror("malloc");
+            free(method);
+            free(uri);
+            free(version);
+            close(newsockfd);
+            continue;
+        }
 
         sscanf(buffer, "%s %s %s", method, uri, version);
-        printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), method, version, uri);
 
-        // man 2 write
-        char *resp = read_file();
-        if (resp)
-        {
-            // handle different file types
-            // const char *file_extension = strrchr("index/blog/June2023.md", '.');
-            // send_http_resp_header(ssl, file_extension);
+        printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
+               ntohs(client_addr.sin_port), method,
+               version, uri);
 
-            // send resp header first
-            send_http_resp_header(ssl, custom_strlen_cacher(resp));
+        read_file(newsockfd, uri);
 
-            int valwrite = SSL_write(ssl, resp, custom_strlen_cacher(resp));
-            if (valwrite < 0)
-            {
-                perror("sll (write)");
-                continue;
-            }
-            printf("ssl (write): Success\n");
-        }
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        // man 2 close
+        free(method);
+        free(uri);
+        free(version);
+
         close(newsockfd);
     }
-    SSL_CTX_free(ctx);
+
+    free(buffer);
+    close(sockfd);
     return 0;
 }
-
-// docs:
-// https://wiki.openssl.org/index.php/Simple_TLS_Server
-// https://github.com/openssl/openssl/blob/7a5f58b2cf0d7b2fa0451603a88c3976c657dae9/demos/sslecho/main.c#L295
