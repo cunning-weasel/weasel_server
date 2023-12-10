@@ -70,7 +70,7 @@ void send_full_res(int newsockfd, char *content, char *content_type, size_t cont
     }
 }
 
-// TO-DO roll own filetype and handlers
+// TO-DO roll own filetype and handler
 void read_file(int newsockfd, char *uri)
 {
     if (custom_strlen_cacher(uri) == 0 || (custom_strlen_cacher(uri) == 1 && uri[0] == '/'))
