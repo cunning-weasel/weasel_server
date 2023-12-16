@@ -119,6 +119,7 @@ void read_file(int newsockfd, char *uri)
         }
 
         char *content_type;
+
         if (strstr(uri, ".wasm"))
         {
             content_type = "application/wasm";
@@ -234,8 +235,7 @@ int main()
         sscanf(buffer, "%s %s %s", method, uri, version);
 
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
-               ntohs(client_addr.sin_port), method,
-               version, uri);
+               ntohs(client_addr.sin_port), method, version, uri);
 
         read_file(newsockfd, uri);
 
