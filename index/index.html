@@ -66,49 +66,51 @@
 
     /* mobile controls */
     #moInterface {
-      /* column-count: 2;
-      height: 30vh;
-      width: 100%;
-      border: solid red 1px; */
-
       display: grid;
       grid-template-columns: 1fr 1fr;
-      /* Two columns, the first one takes up the whole width */
       height: 30vh;
       width: 100%;
       border: solid red 1px;
     }
 
-    #leftDiv {
-      grid-column: 1 / 2;
-      /* Span the first column */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #rightDiv {
-      grid-column: 2 / 3;
-      /* Span the second column */
+    #dPad {
       display: grid;
       grid-template-rows: repeat(3, 1fr);
-      /* Three rows of equal height */
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    #shoulderButtons {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     button {
       width: 100%;
-      height: 100%;
+      height: 50px;
+      padding: 10px;
+      margin: 5px;
     }
 
-    #buttonAttack,
-    #buttonJump {
+    #buttonUp {
       grid-row: 1 / 2;
-      /* Occupy the first row */
+      grid-column: 2 / 3;
     }
 
-    #buttonLook {
-      grid-row: 3 / 4;
-      /* Occupy the third row */
+    #buttonLeft {
+      grid-row: 2 / 3;
+      grid-column: 1 / 2;
+    }
+
+    #buttonDown {
+      grid-row: 3 / 3;
+      grid-column: 2 / 3;
+    }
+
+    #buttonRight {
+      grid-row: 2 / 3;
+      grid-column: 3 / 4;
     }
 
     @-webkit-keyframes rotation {
@@ -166,15 +168,27 @@
     oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
   <div id="moInterface">
     <div id="leftDiv">
+      <div id="dPad">
+        <button id="buttonUp">Up</button>
+        <button id="buttonLeft">Left</button>
+        <button id="buttonDown">Down</button>
+        <button id="buttonRight">Right</button>
+      </div>
     </div>
     <div id="rightDiv">
-      <button id="buttonAttack">Attack</button>
-      <button id="buttonJump">Jump</button>
-      <button id="buttonLook">Look</button>
+      <div id="shoulderButtons">
+        <button id="buttonAttack">Attack</button>
+        <button id="buttonJump">Jump</button>
+      </div>
+      <div id="lookButtons">
+        <button id="buttonLookUp">Up</button>
+        <button id="buttonLookDown">Down</button>
+        <button id="buttonLookLeft">Left</button>
+        <button id="buttonLookRight">Right</button>
+      </div>
     </div>
   </div>
-  <!-- <div id="moInterfaceLeft"></div>
-  <div id="moInterfaceRight"></div> -->
+
   <script>
     var statusElement = document.getElementById("status"),
       progressElement = document.getElementById("progress"),
@@ -266,10 +280,69 @@
           });
       });
 
-    // mobile controls
+    /*
+      mobile controls mapping kb + mouse
+      events to touch events
+    */
     const SPACEBAR_KEYCODE = 32;
+    const CTRL_KEYCODE = 17;
+    const UP_KEYCODE = 87;
+    const DOWN_KEYCODE = 83;
+    const LEFT_KEYCODE = 65;
+    const RIGHT_KEYCODE = 68;
+    const LOOK_UP_KEYCODE = 79;
+    const LOOK_DOWN_KEYCODE = 76;
+    const LOOK_LEFT_KEYCODE = 37;
+    const LOOK_RIGHT_KEYCODE = 39;
+
+    const upDiv = document.getElementById("buttonUp");
+    const downDiv = document.getElementById("buttonDown");
+    const leftDiv = document.getElementById("buttonLeft");
+    const rightDiv = document.getElementById("buttonRight");
 
     const jmpDiv = document.getElementById("buttonJump");
+    const attDiv = document.getElementById("buttonAttack");
+
+    const lookUpDiv = document.getElementById("buttonLookUp");
+    const lookDownDiv = document.getElementById("buttonLookDown");
+    const lookLeftDiv = document.getElementById("buttonLookLeft");
+    const lookRightDiv = document.getElementById("buttonLookRight");
+
+    const mvUp = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "KeyW"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    const mvDown = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "KeyS"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    const mvLeft = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "KeyS"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    const mvRight = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "KeyS"
+      });
+      window.dispatchEvent(ev);
+    };
 
     const jumpHandler = (evType, keyCode) => {
       const ev = new KeyboardEvent(evType, {
@@ -277,9 +350,93 @@
         "which": keyCode,
         "code": "Space"
       });
-      console.log("ev master weasel:", ev);
+      window.dispatchEvent(ev); // smh
+    };
+
+    const attHandler = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "ControlLeft" || "ControlRight"
+      });
       window.dispatchEvent(ev);
     };
+
+    const lookUp = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "KeyO"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    const lookDown = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "KeyL"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    const lookLeft = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "ArrowLeft"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    const lookRight = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "ArrowRight"
+      });
+      window.dispatchEvent(ev);
+    };
+
+    upDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvUp("keydown", UP_KEYCODE);
+    });
+
+    upDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvUp("keyup", UP_KEYCODE);
+    });
+
+    downDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvDown("keydown", DOWN_KEYCODE);
+    });
+
+    downDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvDown("keyup", DOWN_KEYCODE);
+    });
+
+    leftDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvLeft("keydown", LEFT_KEYCODE);
+    });
+
+    leftDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvLeft("keyup", LEFT_KEYCODE);
+    });
+
+    rightDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvRight("keydown", RIGHT_KEYCODE);
+    });
+
+    rightDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvRight("keyup", RIGHT_KEYCODE);
+    });
 
     jmpDiv.addEventListener("touchstart", (ev) => {
       ev.preventDefault();
@@ -291,20 +448,56 @@
       jumpHandler("keyup", SPACEBAR_KEYCODE);
     });
 
-    // const kbMv = (ev) => {
-    //   ev.preventDefault();
-    //   console.log("kbMv event master weasel:", ev);
-    // };
+    attDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      attHandler("keydown", CTRL_KEYCODE);
+    });
 
-    // grab kb and mouse controls
-    // window.addEventListener("keydown", kbMv);
-    // window.addEventListener("mousemove", mouseMv);
+    attDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      attHandler("keyup", CTRL_KEYCODE);
+    });
 
-    // leftDiv.addEventListener("touchmove", touchMv);
+    lookUpDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvUp("keydown", LOOK_UP_KEYCODE);
+    });
 
-    // map kb and mouse controls
+    lookUpDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvUp("keyup", LOOK_UP_KEYCODE);
+    });
 
-    // simple interface?
+    lookDownDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvDown("keydown", LOOK_DOWN_KEYCODE);
+    });
+
+    lookDownDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvDown("keyup", LOOK_DOWN_KEYCODE);
+    });
+
+    lookLeftDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvLeft("keydown", LOOK_LEFT_KEYCODE);
+    });
+
+    lookLeftDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvLeft("keyup", LOOK_LEFT_KEYCODE);
+    });
+
+    lookRightDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      mvRight("keydown", LOOK_RIGHT_KEYCODE);
+    });
+
+    lookRightDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      mvRight("keyup", LOOK_RIGHT_KEYCODE);
+    });
+
   </script>
   <script async src="index.js"></script>
 </body>
