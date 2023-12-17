@@ -100,13 +100,13 @@
       height: 100%;
     }
 
-    #button1,
-    #button2 {
+    #buttonAttack,
+    #buttonJump {
       grid-row: 1 / 2;
       /* Occupy the first row */
     }
 
-    #button3 {
+    #buttonLook {
       grid-row: 3 / 4;
       /* Occupy the third row */
     }
@@ -168,9 +168,9 @@
     <div id="leftDiv">
     </div>
     <div id="rightDiv">
-      <button id="button1">Attack</button>
-      <button id="button2">Jump</button>
-      <button id="button3">Look</button>
+      <button id="buttonAttack">Attack</button>
+      <button id="buttonJump">Jump</button>
+      <button id="buttonLook">Look</button>
     </div>
   </div>
   <!-- <div id="moInterfaceLeft"></div>
@@ -265,49 +265,44 @@
             e && console.error("[post-exception status] " + e);
           });
       });
+
     // mobile controls
-    const kbMv = (e) => {
-      e.preventDefault();
-      console.log("kbMv event master weasel:", e);
-    }
+    const SPACEBAR_KEYCODE = 32;
 
-    const touchMv = (e) => {
-      e.preventDefault();
-      console.log("touch-move event master weasel:", e);
-    }
+    const jmpDiv = document.getElementById("buttonJump");
 
-    const mouseMv = (e) => {
-      e.preventDefault();
-      console.log("mouseMv event master weasel:", e);
-    }
+    const jumpHandler = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        "keyCode": keyCode,
+        "which": keyCode,
+        "code": "Space"
+      });
+      console.log("ev master weasel:", ev);
+      window.dispatchEvent(ev);
+    };
 
-    const mouseClick = (e) => {
-      e.preventDefault();
-      console.log("mouseClck event master weasel:", e);
-    }
+    jmpDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      jumpHandler("keydown", SPACEBAR_KEYCODE);
+    });
 
-    const touchStart = (e) => {
-      // e.preventDefault();
-      console.log("touchStart event master weasel:", e);
-    }
+    jmpDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      jumpHandler("keyup", SPACEBAR_KEYCODE);
+    });
 
-    const touchEnd = (e) => {
-      // e.preventDefault();
-      console.log("touchEnd event master weasel:", e);
-    }
+    // const kbMv = (ev) => {
+    //   ev.preventDefault();
+    //   console.log("kbMv event master weasel:", ev);
+    // };
 
     // grab kb and mouse controls
-    window.addEventListener("keydown", kbMv);
-    window.addEventListener("mousemove", mouseMv);
-    window.addEventListener("click", mouseClick);
+    // window.addEventListener("keydown", kbMv);
+    // window.addEventListener("mousemove", mouseMv);
 
-    window.addEventListener("touchstart", touchStart);
-    window.addEventListener("touchmove", touchMv);
-    window.addEventListener("touchend", touchEnd);
-    // window.addEventListener("touchcancel", touchCancel);
+    // leftDiv.addEventListener("touchmove", touchMv);
 
     // map kb and mouse controls
-
 
     // simple interface?
   </script>
