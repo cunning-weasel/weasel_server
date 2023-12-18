@@ -2,8 +2,8 @@
 <html lang="en-us">
 
 <head>
-  <meta charset="utf-8" />
-  <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+  <meta charset="utf-8">
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <title>weasel-quake</title>
   <link rel="shortcut icon" href="#" />
   <style>
@@ -65,53 +65,123 @@
     }
 
     /* mobile controls */
-    #moInterface {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      height: 30vh;
-      width: 100%;
-      border: solid red 1px;
+    .set {
+      overflow: hidden;
+      padding: 30px;
+      text-align: center;
+      margin-right: 40px;
     }
 
-    #dPad {
-      display: grid;
-      grid-template-rows: repeat(3, 1fr);
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+    .d-pad,
+    .o-pad {
+      display: inline-block;
     }
 
-    #shoulderButtons {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+    .d-pad {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      border-radius: 48%;
+      overflow: hidden;
     }
 
-    button {
-      width: 100%;
-      height: 50px;
-      padding: 10px;
-      margin: 5px;
+    .d-pad a {
+      display: block;
+      position: absolute;
+      -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+      width: 33.3%;
+      height: 43%;
+      line-height: 40%;
+      color: #fff;
+      background: #ddd;
+      text-align: center;
+      transition: background 0.25s;
     }
 
-    #buttonUp {
-      grid-row: 1 / 2;
-      grid-column: 2 / 3;
+    .d-pad a:hover {
+      background: #eee;
     }
 
-    #buttonLeft {
-      grid-row: 2 / 3;
-      grid-column: 1 / 2;
+    .d-pad a:before {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-radius: 5px;
+      border-style: solid;
+      transition: all 0.25s;
     }
 
-    #buttonDown {
-      grid-row: 3 / 3;
-      grid-column: 2 / 3;
+    .d-pad a.left,
+    .d-pad a.right {
+      width: 43%;
+      height: 33%;
     }
 
-    #buttonRight {
-      grid-row: 2 / 3;
-      grid-column: 3 / 4;
+    .o-pad {
+      position: relative;
+      background: #ddd;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      overflow: hidden;
     }
+
+    .o-pad:after {
+      content: '';
+      position: absolute;
+      z-index: 2;
+      width: 20%;
+      height: 20%;
+      top: 50%;
+      left: 50%;
+      background: #ddd;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+
+    .o-pad:hover:after {
+      width: 30%;
+      height: 30%;
+    }
+
+    .o-pad a {
+      display: block;
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      text-align: center;
+      transform: rotate(45deg);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .outline {
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .outline .d-pad {
+      border-radius: 0;
+    }
+
+    .outline .d-pad a {
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: #fff;
+      transition: background 0.25s;
+    }
+
+    .outline .d-pad a:hover {
+      background: linear-gradient(0deg, #fff 0%, #efefef 50%);
+    }
+
+    .outline .o-pad {
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
 
     @-webkit-keyframes rotation {
       from {
@@ -166,27 +236,23 @@
   </div>
   <textarea class="emscripten" id="output" readonly></textarea><canvas class="emscripten" id="canvas"
     oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
-  <div id="moInterface">
-    <div id="leftDiv">
-      <div id="dPad">
-        <button id="buttonUp">Up</button>
-        <button id="buttonLeft">Left</button>
-        <button id="buttonDown">Down</button>
-        <button id="buttonRight">Right</button>
+  <div class="set outline">
+    <nav class="d-pad">
+      <a class="up" href="#"></a>
+      <a class="right" href="#"></a>
+      <a class="down" href="#"></a>
+      <a class="left" href="#"></a>
+    </nav>
+    <nav class="o-pad">
+      <div class="shoulderButtons">
+        <button id="buttonAttack">Attck</button>
+        <button id="buttonJump">Jmp</button>
       </div>
-    </div>
-    <div id="rightDiv">
-      <div id="shoulderButtons">
-        <button id="buttonAttack">Attack</button>
-        <button id="buttonJump">Jump</button>
-      </div>
-      <div id="lookButtons">
-        <button id="buttonLookUp">Up</button>
-        <button id="buttonLookDown">Down</button>
-        <button id="buttonLookLeft">Left</button>
-        <button id="buttonLookRight">Right</button>
-      </div>
-    </div>
+      <a class="up" href="#"></a>
+      <a class="right" href="#"></a>
+      <a class="down" href="#"></a>
+      <a class="left" href="#"></a>
+    </nav>
   </div>
 
   <script>
@@ -295,18 +361,18 @@
     const LOOK_LEFT_KEYCODE = 37;
     const LOOK_RIGHT_KEYCODE = 39;
 
-    const upDiv = document.getElementById("buttonUp");
-    const downDiv = document.getElementById("buttonDown");
-    const leftDiv = document.getElementById("buttonLeft");
-    const rightDiv = document.getElementById("buttonRight");
+    const upDiv = document.querySelector(".buttonUp");
+    const downDiv = document.querySelector(".buttonDown");
+    const leftDiv = document.querySelector(".buttonLeft");
+    const rightDiv = document.querySelector(".buttonRight");
 
     const jmpDiv = document.getElementById("buttonJump");
     const attDiv = document.getElementById("buttonAttack");
 
-    const lookUpDiv = document.getElementById("buttonLookUp");
-    const lookDownDiv = document.getElementById("buttonLookDown");
-    const lookLeftDiv = document.getElementById("buttonLookLeft");
-    const lookRightDiv = document.getElementById("buttonLookRight");
+    const lookUpDiv = document.querySelector(".buttonLookUp");
+    const lookDownDiv = document.querySelector(".buttonLookDown");
+    const lookLeftDiv = document.querySelector(".buttonLookLeft");
+    const lookRightDiv = document.querySelector(".buttonLookRight");
 
     const mvUp = (evType, keyCode) => {
       const ev = new KeyboardEvent(evType, {
@@ -348,7 +414,7 @@
       const ev = new KeyboardEvent(evType, {
         "keyCode": keyCode,
         "which": keyCode,
-        "code": "Space"
+        "code": "Space" || "Enter"
       });
       window.dispatchEvent(ev); // smh
     };
