@@ -70,7 +70,7 @@ void send_full_res(int newsockfd, char *content, char *content_type, size_t cont
     }
 }
 
-// TO-DO roll own filetype and handler
+// TO-DO roll own file handler
 void read_file(int newsockfd, char *uri)
 {
     if (custom_strlen_cacher(uri) == 0 || (custom_strlen_cacher(uri) == 1 && uri[0] == '/'))
@@ -98,7 +98,7 @@ void read_file(int newsockfd, char *uri)
 
         // alloc buffer for entire file
         // cast void pointer returned by malloc to char pointer
-        // TO-DO roll own malloc/ arena
+        // TO-DO roll own arena with mmap/ brk syscalls
         char *buffer = (char *)malloc(file_size);
         if (!buffer)
         {
