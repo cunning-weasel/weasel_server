@@ -66,122 +66,76 @@
 
     /* mobile controls */
     .set {
-      overflow: hidden;
-      padding: 30px;
-      text-align: center;
-      margin-right: 40px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 25vh;
+    }
+
+    .outline {
+      border: 2px solid white;
+      padding: 20px;
+      border-radius: 15px;
     }
 
     .d-pad,
     .o-pad {
-      display: inline-block;
+      display: grid;
+      gap: 10px;
+      height: 15vh;
+      width: 30vw;
     }
 
     .d-pad {
-      position: relative;
-      width: 200px;
-      height: 200px;
-      border-radius: 48%;
-      overflow: hidden;
+      grid-template-rows: repeat(3, 1fr);
+      grid-template-columns: repeat(3, 1fr);
     }
 
-    .d-pad a {
-      display: block;
-      position: absolute;
-      -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
-      width: 33.3%;
-      height: 43%;
-      line-height: 40%;
-      color: #fff;
-      background: #ddd;
+    .d-pad .buttonUp,
+    .d-pad .buttonDown,
+    .o-pad .buttonLookUp,
+    .o-pad .buttonLookDown {
+      grid-column: 2;
+    }
+
+    .d-pad .buttonRight,
+    .o-pad .buttonLookRight {
+      grid-row: 2;
+      grid-column: 3;
+    }
+
+    .d-pad .buttonLeft,
+    .o-pad .buttonLookLeft {
+      grid-row: 2;
+      grid-column: 1;
+    }
+
+    .shoulderButtons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .buttonUp,
+    .buttonDown,
+    .buttonLookUp,
+    .buttonLookDown,
+    .buttonRight,
+    .buttonLeft,
+    .buttonLookRight,
+    .buttonLookLeft,
+    #buttonAttack,
+    #buttonJump {
+      background-color: #202020;
+      color: #e0e0e0;
+      border: 2px solid #e0e0e0;
+      padding: 15px;
       text-align: center;
-      transition: background 0.25s;
-    }
-
-    .d-pad a:hover {
-      background: #eee;
-    }
-
-    .d-pad a:before {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-radius: 5px;
-      border-style: solid;
-      transition: all 0.25s;
-    }
-
-    .d-pad a.left,
-    .d-pad a.right {
-      width: 43%;
-      height: 33%;
-    }
-
-    .o-pad {
-      position: relative;
-      background: #ddd;
-      width: 200px;
-      height: 200px;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
       border-radius: 50%;
-      overflow: hidden;
     }
-
-    .o-pad:after {
-      content: '';
-      position: absolute;
-      z-index: 2;
-      width: 20%;
-      height: 20%;
-      top: 50%;
-      left: 50%;
-      background: #ddd;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      display: none;
-      transition: all 0.25s;
-      cursor: pointer;
-    }
-
-    .o-pad:hover:after {
-      width: 30%;
-      height: 30%;
-    }
-
-    .o-pad a {
-      display: block;
-      position: absolute;
-      width: 50%;
-      height: 50%;
-      text-align: center;
-      transform: rotate(45deg);
-      border: 1px solid rgba(0, 0, 0, 0.2);
-    }
-
-    .outline {
-      background: #fff;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    .outline .d-pad {
-      border-radius: 0;
-    }
-
-    .outline .d-pad a {
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      background: #fff;
-      transition: background 0.25s;
-    }
-
-    .outline .d-pad a:hover {
-      background: linear-gradient(0deg, #fff 0%, #efefef 50%);
-    }
-
-    .outline .o-pad {
-      background: #fff;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
 
     @-webkit-keyframes rotation {
       from {
@@ -237,22 +191,22 @@
   <textarea class="emscripten" id="output" readonly></textarea><canvas class="emscripten" id="canvas"
     oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
   <div class="set outline">
-    <nav class="d-pad">
-      <a class="up" href="#"></a>
-      <a class="right" href="#"></a>
-      <a class="down" href="#"></a>
-      <a class="left" href="#"></a>
-    </nav>
-    <nav class="o-pad">
-      <div class="shoulderButtons">
-        <button id="buttonAttack">Attck</button>
-        <button id="buttonJump">Jmp</button>
-      </div>
-      <a class="up" href="#"></a>
-      <a class="right" href="#"></a>
-      <a class="down" href="#"></a>
-      <a class="left" href="#"></a>
-    </nav>
+    <div class="d-pad">
+      <button class="buttonUp"></button>
+      <button class="buttonRight"></button>
+      <button class="buttonDown"></button>
+      <button class="buttonLeft"></button>
+    </div>
+    <div class="shoulderButtons">
+      <button id="buttonAttack">Attck</button>
+      <button id="buttonJump">Jmp</button>
+    </div>
+    <div class="o-pad">
+      <button class="buttonLookUp"></button>
+      <button class="buttonLookRight"></button>
+      <button class="buttonLookDown"></button>
+      <button class="buttonLookLeft"></button>
+    </div>
   </div>
 
   <script>
