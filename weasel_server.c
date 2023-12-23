@@ -2,10 +2,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+
+#include <sys/socket.h>
+#include <sys/mman.h>
+#include <bits/mman-linux.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 6000000
@@ -70,8 +73,60 @@ void send_full_res(int newsockfd, char *content, char *content_type, size_t cont
     }
 }
 
+// arena
+typedef struct Arena
+{
+    char *base;
+    char *current;
+    size_t size;
+} Arena;
+
+Arena *create_arena(size_t size)
+{
+    // pass -1 flag as we're not ding file mapping
+    Arena *arena = (Arena *)mmap(NULL, sizeof(Arena) + size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (arena == MAP_FAILED)
+    {
+        perror("sys call mmap failure master weasel");
+        exit(EXIT_FAILURE);
+    }
+    printf("syscall mmap success master weasel");
+
+    arena->base = (char *)(arena + 1); // skip arena struct
+    arena->current = arena->base;
+    arena->size = size;
+
+    return arena;
+}
+
+void *arena_allocate(Arena *arena, size_t size)
+{
+    // check space in arena
+    if (arena->current + size > arena->base + arena->size)
+    {
+        perror("Not enough space in arena");
+        return NULL;
+    }
+    // alloc more space from arena
+    char *new_current = arena->current;
+    arena->current += size;
+
+    // return pointer to alloc'd block
+    return new_current;
+}
+
+void arena_release(Arena *arena)
+{
+    if (munmap(arena, sizeof(Arena) + arena->size) == -1)
+    {
+        perror("munmap sys error master weasel");
+        exit(EXIT_FAILURE);
+    }
+}
+
 // TO-DO roll own file handler
-void read_file(int newsockfd, char *uri)
+void read_file(Arena *arena, int newsockfd, char *uri)
 {
     if (custom_strlen_cacher(uri) == 0 || (custom_strlen_cacher(uri) == 1 && uri[0] == '/'))
     {
@@ -97,12 +152,11 @@ void read_file(int newsockfd, char *uri)
         fseek(fp, 0, SEEK_SET);
 
         // alloc buffer for entire file
-        // cast void pointer returned by malloc to char pointer
         // TO-DO roll own arena with mmap/ brk syscalls
-        char *buffer = (char *)malloc(file_size);
+        char *buffer = (char *)arena_allocate(arena, file_size);
         if (!buffer)
         {
-            perror("malloc");
+            perror("arena_allocate");
             fclose(fp);
             return;
         }
@@ -114,7 +168,7 @@ void read_file(int newsockfd, char *uri)
         if (bytes_read != file_size)
         {
             perror("fread");
-            free(buffer);
+            // free(buffer);
             return;
         }
 
@@ -135,7 +189,8 @@ void read_file(int newsockfd, char *uri)
 
         send_full_res(newsockfd, buffer, content_type, file_size);
 
-        free(buffer);
+        // free(buffer);
+        arena_release(arena);
     }
     else
     {
@@ -145,10 +200,20 @@ void read_file(int newsockfd, char *uri)
 
 int main()
 {
-    char *buffer = (char *)malloc(BUFFER_SIZE);
+    // arena init
+    size_t arena_size = 60 * 1024 * 1024; // 60MB
+    Arena *arena = create_arena(arena_size);
+
+    // char *buffer = (char *)malloc(BUFFER_SIZE);
+    // if (!buffer)
+    // {
+    //     perror("malloc");
+    //     return 1;
+    // }
+    char *buffer = arena_allocate(arena, BUFFER_SIZE);
     if (!buffer)
     {
-        perror("malloc");
+        perror("ArenaAllocate");
         return 1;
     }
 
@@ -157,7 +222,7 @@ int main()
     if (sockfd == -1)
     {
         perror("webserver (socket)");
-        free(buffer);
+        // free(buffer);
         return 1;
     }
     printf("socket created successfully\n");
@@ -166,7 +231,7 @@ int main()
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
     {
         perror("setsockopt(SO_REUSEADDR) failed");
-        free(buffer);
+        // free(buffer);
         return 1;
     }
 
@@ -182,7 +247,7 @@ int main()
     if (bind(sockfd, (struct sockaddr *)&host_addr, host_addrlen) != 0)
     {
         perror("webserver (bind)");
-        free(buffer);
+        // free(buffer);
         return 1;
     }
     printf("socket successfully bound to address\n");
@@ -190,7 +255,7 @@ int main()
     if (listen(sockfd, SOMAXCONN) != 0)
     {
         perror("webserver (listen)");
-        free(buffer);
+        // free(buffer);
         return 1;
     }
     printf("server listening for connections on: http://localhost:8080 \n");
@@ -218,16 +283,16 @@ int main()
             continue;
         }
 
-        char *method = malloc(BUFFER_SIZE);
-        char *uri = malloc(BUFFER_SIZE);
-        char *version = malloc(BUFFER_SIZE);
+        char *method = arena_allocate(arena, BUFFER_SIZE);
+        char *uri = arena_allocate(arena, BUFFER_SIZE);
+        char *version = arena_allocate(arena, BUFFER_SIZE);
 
         if (!method || !uri || !version)
         {
-            perror("malloc");
-            free(method);
-            free(uri);
-            free(version);
+            perror("arena_allocate");
+            // free(method);
+            // free(uri);
+            // free(version);
             close(newsockfd);
             continue;
         }
@@ -237,16 +302,18 @@ int main()
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
                ntohs(client_addr.sin_port), method, version, uri);
 
-        read_file(newsockfd, uri);
+        read_file(arena, newsockfd, uri);
 
-        free(method);
-        free(uri);
-        free(version);
+        // free(method);
+        // free(uri);
+        // free(version);
 
         close(newsockfd);
     }
 
-    free(buffer);
+    // free(buffer);
+    arena_release(arena);
+
     close(sockfd);
     return 0;
 }

@@ -1,225 +1,229 @@
 <!DOCTYPE html>
 <html lang="en-us">
-
-<head>
-  <meta charset="utf-8">
-  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-  <title>weasel-quake</title>
-  <link rel="shortcut icon" href="#" />
-  <style>
-    body {
-      background-color: #202020;
-      color: #e0e0e0;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 16px;
-      margin: 0;
-    }
-
-    .emscripten {
-      padding-right: 0;
-      margin-left: auto;
-      margin-right: auto;
-      display: block;
-    }
-
-    textarea.emscripten {
-      font-family: monospace;
-      font-size: 14px;
-      width: calc(100% - 24px);
-      height: calc(100vh - 24px);
-      margin-top: 8px;
-      background-color: inherit;
-      color: silver;
-      border: 1px solid #404040;
-      resize: none;
-      display: none;
-    }
-
-    div.emscripten {
-      text-align: center;
-    }
-
-    canvas.emscripten {
-      border: 0 none;
-      background-color: #000;
-      width: calc(min(100vw, 100vh * 4 / 3));
-      height: calc(min(100vh, 100vw * 0.75));
-      margin-top: calc(0.5 * (100vh - (min(100vh, 100vw * 0.75))));
-      display: none;
-    }
-
-    .spinner {
-      height: 50px;
-      width: 50px;
-      margin: 0 auto;
-      -webkit-animation: rotation 0.8s linear infinite;
-      -moz-animation: rotation 0.8s linear infinite;
-      -o-animation: rotation 0.8s linear infinite;
-      animation: rotation 0.8s linear infinite;
-      border-left: 10px solid #606060;
-      border-right: 10px solid #606060;
-      border-bottom: 10px solid #606060;
-      border-top: 10px solid #fff;
-      border-radius: 100%;
-      background-color: #202020;
-    }
-
-    /* mobile controls */
-    .set {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      height: 25vh;
-    }
-
-    .outline {
-      border: 2px solid white;
-      padding: 20px;
-      border-radius: 15px;
-    }
-
-    .d-pad,
-    .o-pad {
-      display: grid;
-      gap: 10px;
-      height: 15vh;
-      width: 30vw;
-    }
-
-    .d-pad {
-      grid-template-rows: repeat(3, 1fr);
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .d-pad .buttonUp,
-    .d-pad .buttonDown,
-    .o-pad .buttonLookUp,
-    .o-pad .buttonLookDown {
-      grid-column: 2;
-    }
-
-    .d-pad .buttonRight,
-    .o-pad .buttonLookRight {
-      grid-row: 2;
-      grid-column: 3;
-    }
-
-    .d-pad .buttonLeft,
-    .o-pad .buttonLookLeft {
-      grid-row: 2;
-      grid-column: 1;
-    }
-
-    .shoulderButtons {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .buttonUp,
-    .buttonDown,
-    .buttonLookUp,
-    .buttonLookDown,
-    .buttonRight,
-    .buttonLeft,
-    .buttonLookRight,
-    .buttonLookLeft,
-    #buttonAttack,
-    #buttonJump {
-      background-color: #202020;
-      color: #e0e0e0;
-      border: 2px solid #e0e0e0;
-      padding: 15px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
-      border-radius: 50%;
-    }
-
-    @-webkit-keyframes rotation {
-      from {
-        -webkit-transform: rotate(0);
+  <head>
+    <meta charset="utf-8" />
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <title>weasel-quake</title>
+    <link rel="shortcut icon" href="#" />
+    <style>
+      body {
+        background-color: #202020;
+        color: #e0e0e0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        margin: 0;
       }
 
-      to {
-        -webkit-transform: rotate(360deg);
-      }
-    }
-
-    @-moz-keyframes rotation {
-      from {
-        -moz-transform: rotate(0);
+      .emscripten {
+        padding-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
       }
 
-      to {
-        -moz-transform: rotate(360deg);
-      }
-    }
-
-    @-o-keyframes rotation {
-      from {
-        -o-transform: rotate(0);
-      }
-
-      to {
-        -o-transform: rotate(360deg);
-      }
-    }
-
-    @keyframes rotation {
-      from {
-        transform: rotate(0);
+      textarea.emscripten {
+        font-family: monospace;
+        font-size: 14px;
+        width: calc(100% - 24px);
+        height: calc(100vh - 24px);
+        margin-top: 8px;
+        background-color: inherit;
+        color: silver;
+        border: 1px solid #404040;
+        resize: none;
+        display: none;
       }
 
-      to {
-        transform: rotate(360deg);
+      div.emscripten {
+        text-align: center;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <figure id="spinner" style="overflow: visible">
-    <div class="spinner"></div>
-    <center style="margin-top: 0.5em"><strong>weasel-quake</strong></center>
-  </figure>
-  <div class="emscripten" id="status">loading...</div>
-  <div class="emscripten">
-    <progress hidden id="progress" max="100" value="0"></progress>
-  </div>
-  <textarea class="emscripten" id="output" readonly></textarea><canvas class="emscripten" id="canvas"
-    oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
-  <div class="set outline">
-    <div class="d-pad">
-      <button class="buttonUp"></button>
-      <button class="buttonRight"></button>
-      <button class="buttonDown"></button>
-      <button class="buttonLeft"></button>
+      canvas.emscripten {
+        border: 0 none;
+        background-color: #000;
+        width: calc(min(100vw, 100vh * 4 / 3));
+        height: calc(min(100vh, 100vw * 0.75));
+        margin-top: calc(0.5 * (100vh - (min(100vh, 100vw * 0.75))));
+        display: none;
+      }
+
+      .spinner {
+        height: 50px;
+        width: 50px;
+        margin: 0 auto;
+        -webkit-animation: rotation 0.8s linear infinite;
+        -moz-animation: rotation 0.8s linear infinite;
+        -o-animation: rotation 0.8s linear infinite;
+        animation: rotation 0.8s linear infinite;
+        border-left: 10px solid #606060;
+        border-right: 10px solid #606060;
+        border-bottom: 10px solid #606060;
+        border-top: 10px solid #fff;
+        border-radius: 100%;
+        background-color: #202020;
+      }
+
+      /* mobile controls */
+      .set {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        height: 25vh;
+      }
+
+      .outline {
+        border: 2px solid white;
+        padding: 20px;
+        border-radius: 15px;
+      }
+
+      .d-pad,
+      .o-pad {
+        display: grid;
+        gap: 10px;
+        height: 15vh;
+        width: 30vw;
+      }
+
+      .d-pad {
+        grid-template-rows: repeat(3, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .d-pad .buttonUp,
+      .d-pad .buttonDown,
+      .o-pad .buttonLookUp,
+      .o-pad .buttonLookDown {
+        grid-column: 2;
+      }
+
+      .d-pad .buttonRight,
+      .o-pad .buttonLookRight {
+        grid-row: 2;
+        grid-column: 3;
+      }
+
+      .d-pad .buttonLeft,
+      .o-pad .buttonLookLeft {
+        grid-row: 2;
+        grid-column: 1;
+      }
+
+      .shoulderButtons {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .buttonUp,
+      .buttonDown,
+      .buttonLookUp,
+      .buttonLookDown,
+      .buttonRight,
+      .buttonLeft,
+      .buttonLookRight,
+      .buttonLookLeft,
+      #buttonAttack,
+      #buttonJump {
+        background-color: #202020;
+        color: #e0e0e0;
+        border: 2px solid #e0e0e0;
+        padding: 15px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        border-radius: 50%;
+      }
+
+      @-webkit-keyframes rotation {
+        from {
+          -webkit-transform: rotate(0);
+        }
+
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+
+      @-moz-keyframes rotation {
+        from {
+          -moz-transform: rotate(0);
+        }
+
+        to {
+          -moz-transform: rotate(360deg);
+        }
+      }
+
+      @-o-keyframes rotation {
+        from {
+          -o-transform: rotate(0);
+        }
+
+        to {
+          -o-transform: rotate(360deg);
+        }
+      }
+
+      @keyframes rotation {
+        from {
+          transform: rotate(0);
+        }
+
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <figure id="spinner" style="overflow: visible">
+      <div class="spinner"></div>
+      <center style="margin-top: 0.5em"><strong>weasel-quake</strong></center>
+    </figure>
+    <div class="emscripten" id="status">loading...</div>
+    <div class="emscripten">
+      <progress hidden id="progress" max="100" value="0"></progress>
     </div>
-    <div class="shoulderButtons">
-      <button id="buttonAttack">Attck</button>
-      <button id="buttonJump">Jmp</button>
+    <textarea class="emscripten" id="output" readonly></textarea
+    ><canvas
+      class="emscripten"
+      id="canvas"
+      oncontextmenu="event.preventDefault()"
+      tabindex="-1"
+    ></canvas>
+    <div class="set outline">
+      <div class="d-pad">
+        <button class="buttonUp"></button>
+        <button class="buttonRight"></button>
+        <button class="buttonDown"></button>
+        <button class="buttonLeft"></button>
+      </div>
+      <div class="shoulderButtons">
+        <button id="buttonAttack">Attck</button>
+        <button id="buttonJump">Jmp</button>
+      </div>
+      <div class="o-pad">
+        <button class="buttonLookUp"></button>
+        <button class="buttonLookRight"></button>
+        <button class="buttonLookDown"></button>
+        <button class="buttonLookLeft"></button>
+      </div>
     </div>
-    <div class="o-pad">
-      <button class="buttonLookUp"></button>
-      <button class="buttonLookRight"></button>
-      <button class="buttonLookDown"></button>
-      <button class="buttonLookLeft"></button>
-    </div>
-  </div>
 
-  <script>
-    var statusElement = document.getElementById("status"),
-      progressElement = document.getElementById("progress"),
-      spinnerElement = document.getElementById("spinner"),
-      canvasElement = document.getElementById("canvas"),
-      outputElement = document.getElementById("output"),
-      Module = {
-        preRun: [],
-        postRun: [],
-        print:
-          ((outputElement.value = ""),
+    <script>
+      var statusElement = document.getElementById("status"),
+        progressElement = document.getElementById("progress"),
+        spinnerElement = document.getElementById("spinner"),
+        canvasElement = document.getElementById("canvas"),
+        outputElement = document.getElementById("output"),
+        Module = {
+          preRun: [],
+          postRun: [],
+          print:
+            ((outputElement.value = ""),
             function (e) {
               arguments.length > 1 &&
                 (e = Array.prototype.slice.call(arguments).join(" ")),
@@ -227,26 +231,26 @@
                 (outputElement.value += e + "\n"),
                 (outputElement.scrollTop = outputElement.scrollHeight);
             }),
-        canvas:
-          (canvasElement.addEventListener(
-            "webglcontextlost",
-            function (e) {
-              alert("WebGL context lost. You will need to reload the page."),
-                e.preventDefault();
-            },
-            !1
-          ),
+          canvas:
+            (canvasElement.addEventListener(
+              "webglcontextlost",
+              function (e) {
+                alert("WebGL context lost. You will need to reload the page."),
+                  e.preventDefault();
+              },
+              !1
+            ),
             canvasElement),
-        setStatus: function (e) {
-          if (
-            (Module.setStatus.last ||
-              (Module.setStatus.last = { time: Date.now(), text: "" }),
+          setStatus: function (e) {
+            if (
+              (Module.setStatus.last ||
+                (Module.setStatus.last = { time: Date.now(), text: "" }),
               e !== Module.setStatus.last.text)
-          ) {
-            var t = e.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/),
-              n = Date.now();
-            (t && n - Module.setStatus.last.time < 30) ||
-              ((Module.setStatus.last.time = n),
+            ) {
+              var t = e.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/),
+                n = Date.now();
+              (t && n - Module.setStatus.last.time < 30) ||
+                ((Module.setStatus.last.time = n),
                 (Module.setStatus.last.text = e),
                 t
                   ? ((e = t[1]),
@@ -259,267 +263,265 @@
                     (progressElement.hidden = !0),
                     e || (spinnerElement.hidden = !0)),
                 (statusElement.innerHTML = e));
-          }
-        },
-        hideConsole: function () {
-          (outputElement.style.display = "none"),
-            (canvasElement.style.display = "block");
-        },
-        showConsole: function () {
-          (canvasElement.style.display = "none"),
-            (outputElement.style.display = "block"),
-            (outputElement.scrollTop = outputElement.scrollHeight);
-        },
-        totalDependencies: 0,
-        monitorRunDependencies: function (e) {
-          (this.totalDependencies = Math.max(this.totalDependencies, e)),
-            Module.setStatus(
-              e
-                ? "Preparing... (" +
-                (this.totalDependencies - e) +
-                "/" +
-                this.totalDependencies +
-                ")"
-                : "Loading complete."
-            );
-        },
-        onRuntimeInitialized: function () {
-          outputElement.style.display = "block";
-        },
-      };
-    (Module.arguments =
-      window.location.search.length > 1
-        ? window.location.search.substr(1).split("&")
-        : []),
-      Module.setStatus("loading..."),
-      (window.onerror = function () {
-        Module.setStatus("Exception thrown, see js console"),
-          (spinnerElement.style.display = "none"),
-          (Module.setStatus = function (e) {
-            e && console.error("[post-exception status] " + e);
-          });
-      });
+            }
+          },
+          hideConsole: function () {
+            (outputElement.style.display = "none"),
+              (canvasElement.style.display = "block");
+          },
+          showConsole: function () {
+            (canvasElement.style.display = "none"),
+              (outputElement.style.display = "block"),
+              (outputElement.scrollTop = outputElement.scrollHeight);
+          },
+          totalDependencies: 0,
+          monitorRunDependencies: function (e) {
+            (this.totalDependencies = Math.max(this.totalDependencies, e)),
+              Module.setStatus(
+                e
+                  ? "Preparing... (" +
+                      (this.totalDependencies - e) +
+                      "/" +
+                      this.totalDependencies +
+                      ")"
+                  : "Loading complete."
+              );
+          },
+          onRuntimeInitialized: function () {
+            outputElement.style.display = "block";
+          },
+        };
+      (Module.arguments =
+        window.location.search.length > 1
+          ? window.location.search.substr(1).split("&")
+          : []),
+        Module.setStatus("loading..."),
+        (window.onerror = function () {
+          Module.setStatus("Exception thrown, see js console"),
+            (spinnerElement.style.display = "none"),
+            (Module.setStatus = function (e) {
+              e && console.error("[post-exception status] " + e);
+            });
+        });
 
-    /*
+      /*
       mobile controls mapping kb + mouse
       events to touch events
     */
-    const SPACEBAR_KEYCODE = 32;
-    const CTRL_KEYCODE = 17;
-    const UP_KEYCODE = 87;
-    const DOWN_KEYCODE = 83;
-    const LEFT_KEYCODE = 65;
-    const RIGHT_KEYCODE = 68;
-    const LOOK_UP_KEYCODE = 79;
-    const LOOK_DOWN_KEYCODE = 76;
-    const LOOK_LEFT_KEYCODE = 37;
-    const LOOK_RIGHT_KEYCODE = 39;
+      const SPACEBAR_KEYCODE = 32;
+      const CTRL_KEYCODE = 17;
+      const UP_KEYCODE = 87;
+      const DOWN_KEYCODE = 83;
+      const LEFT_KEYCODE = 65;
+      const RIGHT_KEYCODE = 68;
+      const LOOK_UP_KEYCODE = 79;
+      const LOOK_DOWN_KEYCODE = 76;
+      const LOOK_LEFT_KEYCODE = 37;
+      const LOOK_RIGHT_KEYCODE = 39;
 
-    const upDiv = document.querySelector(".buttonUp");
-    const downDiv = document.querySelector(".buttonDown");
-    const leftDiv = document.querySelector(".buttonLeft");
-    const rightDiv = document.querySelector(".buttonRight");
+      const upDiv = document.querySelector(".buttonUp");
+      const downDiv = document.querySelector(".buttonDown");
+      const leftDiv = document.querySelector(".buttonLeft");
+      const rightDiv = document.querySelector(".buttonRight");
 
-    const jmpDiv = document.getElementById("buttonJump");
-    const attDiv = document.getElementById("buttonAttack");
+      const jmpDiv = document.getElementById("buttonJump");
+      const attDiv = document.getElementById("buttonAttack");
 
-    const lookUpDiv = document.querySelector(".buttonLookUp");
-    const lookDownDiv = document.querySelector(".buttonLookDown");
-    const lookLeftDiv = document.querySelector(".buttonLookLeft");
-    const lookRightDiv = document.querySelector(".buttonLookRight");
+      const lookUpDiv = document.querySelector(".buttonLookUp");
+      const lookDownDiv = document.querySelector(".buttonLookDown");
+      const lookLeftDiv = document.querySelector(".buttonLookLeft");
+      const lookRightDiv = document.querySelector(".buttonLookRight");
 
-    const mvUp = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "KeyW"
+      const mvUp = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "KeyW",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const mvDown = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "KeyS",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const mvLeft = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "KeyS",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const mvRight = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "KeyS",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const jumpHandler = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "Space" || "Enter",
+        });
+        window.dispatchEvent(ev); // smh
+      };
+
+      const attHandler = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "ControlLeft" || "ControlRight",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const lookUp = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "KeyO",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const lookDown = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "KeyL",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const lookLeft = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "ArrowLeft",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      const lookRight = (evType, keyCode) => {
+        const ev = new KeyboardEvent(evType, {
+          keyCode: keyCode,
+          which: keyCode,
+          code: "ArrowRight",
+        });
+        window.dispatchEvent(ev);
+      };
+
+      upDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvUp("keydown", UP_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const mvDown = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "KeyS"
+      upDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvUp("keyup", UP_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const mvLeft = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "KeyS"
+      downDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvDown("keydown", DOWN_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const mvRight = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "KeyS"
+      downDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvDown("keyup", DOWN_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const jumpHandler = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "Space" || "Enter"
+      leftDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvLeft("keydown", LEFT_KEYCODE);
       });
-      window.dispatchEvent(ev); // smh
-    };
 
-    const attHandler = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "ControlLeft" || "ControlRight"
+      leftDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvLeft("keyup", LEFT_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const lookUp = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "KeyO"
+      rightDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvRight("keydown", RIGHT_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const lookDown = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "KeyL"
+      rightDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvRight("keyup", RIGHT_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const lookLeft = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "ArrowLeft"
+      jmpDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        jumpHandler("keydown", SPACEBAR_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    const lookRight = (evType, keyCode) => {
-      const ev = new KeyboardEvent(evType, {
-        "keyCode": keyCode,
-        "which": keyCode,
-        "code": "ArrowRight"
+      jmpDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        jumpHandler("keyup", SPACEBAR_KEYCODE);
       });
-      window.dispatchEvent(ev);
-    };
 
-    upDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvUp("keydown", UP_KEYCODE);
-    });
+      attDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        attHandler("keydown", CTRL_KEYCODE);
+      });
 
-    upDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvUp("keyup", UP_KEYCODE);
-    });
+      attDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        attHandler("keyup", CTRL_KEYCODE);
+      });
 
-    downDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvDown("keydown", DOWN_KEYCODE);
-    });
+      lookUpDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvUp("keydown", LOOK_UP_KEYCODE);
+      });
 
-    downDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvDown("keyup", DOWN_KEYCODE);
-    });
+      lookUpDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvUp("keyup", LOOK_UP_KEYCODE);
+      });
 
-    leftDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvLeft("keydown", LEFT_KEYCODE);
-    });
+      lookDownDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvDown("keydown", LOOK_DOWN_KEYCODE);
+      });
 
-    leftDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvLeft("keyup", LEFT_KEYCODE);
-    });
+      lookDownDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvDown("keyup", LOOK_DOWN_KEYCODE);
+      });
 
-    rightDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvRight("keydown", RIGHT_KEYCODE);
-    });
+      lookLeftDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvLeft("keydown", LOOK_LEFT_KEYCODE);
+      });
 
-    rightDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvRight("keyup", RIGHT_KEYCODE);
-    });
+      lookLeftDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvLeft("keyup", LOOK_LEFT_KEYCODE);
+      });
 
-    jmpDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      jumpHandler("keydown", SPACEBAR_KEYCODE);
-    });
+      lookRightDiv.addEventListener("touchstart", (ev) => {
+        ev.preventDefault();
+        mvRight("keydown", LOOK_RIGHT_KEYCODE);
+      });
 
-    jmpDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      jumpHandler("keyup", SPACEBAR_KEYCODE);
-    });
-
-    attDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      attHandler("keydown", CTRL_KEYCODE);
-    });
-
-    attDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      attHandler("keyup", CTRL_KEYCODE);
-    });
-
-    lookUpDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvUp("keydown", LOOK_UP_KEYCODE);
-    });
-
-    lookUpDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvUp("keyup", LOOK_UP_KEYCODE);
-    });
-
-    lookDownDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvDown("keydown", LOOK_DOWN_KEYCODE);
-    });
-
-    lookDownDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvDown("keyup", LOOK_DOWN_KEYCODE);
-    });
-
-    lookLeftDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvLeft("keydown", LOOK_LEFT_KEYCODE);
-    });
-
-    lookLeftDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvLeft("keyup", LOOK_LEFT_KEYCODE);
-    });
-
-    lookRightDiv.addEventListener("touchstart", (ev) => {
-      ev.preventDefault();
-      mvRight("keydown", LOOK_RIGHT_KEYCODE);
-    });
-
-    lookRightDiv.addEventListener("touchend", (ev) => {
-      ev.preventDefault();
-      mvRight("keyup", LOOK_RIGHT_KEYCODE);
-    });
-
-  </script>
-  <script async src="index.js"></script>
-</body>
-
+      lookRightDiv.addEventListener("touchend", (ev) => {
+        ev.preventDefault();
+        mvRight("keyup", LOOK_RIGHT_KEYCODE);
+      });
+    </script>
+    <script async src="index.js"></script>
+  </body>
 </html>
