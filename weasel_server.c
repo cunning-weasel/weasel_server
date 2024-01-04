@@ -6,12 +6,24 @@
 #include <signal.h>
 #include <string.h>
 
+#include <time.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 60000
 #define PATH_MAX 4096
+
+// TO-DO: add logging. wouldn't need
+// most printf and all perrors
+// void log_message(const char *msg)
+// {
+//     time_t current_time;
+//     struct tm *time_info;
+//     time(&current_time);
+//     time_info = localtime(&current_time);
+//     printf("[%02d:%02d:%02d] %s\n", time_info->tm_hour, time_info->tm_min, time_info->tm_sec, msg);
+// }
 
 size_t weasel_len(char *string)
 {
@@ -50,39 +62,17 @@ size_t custom_strlen_cacher(char *str)
     return len;
 }
 
-void send_full_res(int newsockfd, char *content, char *content_type, size_t content_length)
-{
-    char header[1024];
-    snprintf(header, sizeof(header),
-             "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %zu\r\n\r\n",
-             content_type, content_length);
-
-    int valwrite = write(newsockfd, header, custom_strlen_cacher(header));
-    if (valwrite < 0)
-    {
-        perror("write");
-        return;
-    }
-
-    valwrite = write(newsockfd, content, content_length);
-    if (valwrite < 0)
-    {
-        perror("write");
-        return;
-    }
-}
-
 // arena
 typedef struct Arena
 {
-    char *base;
-    char *current;
+    char *base; // void?
+    char *used; // size_t?
     size_t size;
 } Arena;
 
 Arena *create_arena(size_t size)
 {
-    // pass -1 flag as we're not ding file mapping
+    // -1 == no file mapping
     Arena *arena = (Arena *)mmap(NULL, sizeof(Arena) + size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
     if (arena == MAP_FAILED)
@@ -93,7 +83,7 @@ Arena *create_arena(size_t size)
     printf("syscall mmap success master weasel\n");
 
     arena->base = (char *)(arena + 1); // skip arena struct
-    arena->current = arena->base;
+    arena->used = arena->base;
     arena->size = size;
 
     return arena;
@@ -102,19 +92,26 @@ Arena *create_arena(size_t size)
 void *arena_allocate(Arena *arena, size_t size)
 {
     // check space in arena
-    if (arena->current + size > arena->base + arena->size)
+    if (arena->used + size > arena->base + arena->size)
     {
-        perror("Not enough space in arena");
+        perror("Not enough space in arena master weasel :/ )");
         return NULL;
     }
     // alloc more space from arena
-    char *new_current = arena->current;
-    arena->current += size;
+    char *new_used = arena->used;
+    arena->used += size;
 
     // return pointer to alloc'd block
-    fprintf(stderr, "Allocated %zu bytes at %p\n", size, new_current);
-    return new_current;
+    fprintf(stderr, "Allocated %zu bytes at %p\n", size, new_used);
+    return new_used;
 }
+
+// void arena_reset(Arena *arena)
+// {
+//     arena->current = arena->base;
+//     // clear the memory if needed (depending on a flag in Arena)?
+//     // memset(arena->base, 0, arena->size);
+// }
 
 void arena_release(Arena *arena)
 {
@@ -125,7 +122,35 @@ void arena_release(Arena *arena)
     }
 }
 
+// TO-DO: dynamic buffer alloc?
+// size_t get_request_size(int newsockfd)
+// {
+//     // get size of the incoming request
+//     // ...
+//     // ...
+//     size_t buffer_size = get_request_size(newsockfd);
+//     char *buffer = arena_allocate(arena, buffer_size);
+// }
+
 // TO-DO: roll own file handler
+// need to look at sys calls
+// typedef struct {
+//     const char *extension;
+//     const char *content_type;
+// } ContentTypeMapping;
+
+// // mappings
+// ContentTypeMapping content_type_mappings[] = {
+//     {".wasm", "application/wasm"},
+//     {".js", "text/javascript"},
+//     {".html", "text/html"},
+//     // data file...
+// };
+
+// const char *get_content_type(const char *uri) {
+//     // ...
+// }
+
 void read_file(Arena *arena, int newsockfd, char *uri)
 {
     if (custom_strlen_cacher(uri) == 0 || (custom_strlen_cacher(uri) == 1 && uri[0] == '/'))
@@ -192,10 +217,33 @@ void read_file(Arena *arena, int newsockfd, char *uri)
     }
 }
 
+// TO-DO: break up main into:
+// setup_socket, parse_req, read_file, send_res
+void send_full_res(int newsockfd, char *content, char *content_type, size_t content_length)
+{
+    char header[1024];
+    snprintf(header, sizeof(header),
+             "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %zu\r\n\r\n",
+             content_type, content_length);
+
+    int valwrite = write(newsockfd, header, custom_strlen_cacher(header));
+    if (valwrite < 0)
+    {
+        perror("write");
+        return;
+    }
+
+    valwrite = write(newsockfd, content, content_length);
+    if (valwrite < 0)
+    {
+        perror("write");
+        return;
+    }
+}
+
 int main()
 {
-    // arena init
-    size_t arena_size = 500 * 1024 * 1024;  // 500MB
+    size_t arena_size = 500 * 1024 * 1024; // 500MB
     Arena *arena = create_arena(arena_size);
 
     char *buffer = arena_allocate(arena, BUFFER_SIZE);
@@ -285,9 +333,10 @@ int main()
 
         read_file(arena, newsockfd, uri);
         close(newsockfd);
+        // arena_reset(arena);
     }
 
-    arena_release(arena);
     close(sockfd);
+    arena_release(arena);
     return 0;
 }
