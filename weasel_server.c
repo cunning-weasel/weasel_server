@@ -94,7 +94,7 @@ void *arena_allocate(Arena *arena, size_t size)
     // check space in arena
     if (arena->used + size > arena->base + arena->size)
     {
-        perror("Not enough space in arena master weasel :/ )");
+        perror("Not enough space in arena master weasel :/ )\n");
         return NULL;
     }
     // alloc more space from arena
