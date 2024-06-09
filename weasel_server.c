@@ -62,7 +62,6 @@ size_t custom_strlen_cacher(char *str)
     return len;
 }
 
-// arena
 typedef struct Arena
 {
     char *base; // void?
@@ -72,15 +71,15 @@ typedef struct Arena
 
 Arena *create_arena(size_t size)
 {
-    // -1 == no file mapping
+    // -1 for no file mapping
     Arena *arena = (Arena *)mmap(NULL, sizeof(Arena) + size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
     if (arena == MAP_FAILED)
     {
-        perror("sys call mmap failure master weasel\n");
+        perror("mmap call failure master weasel\n");
         exit(EXIT_FAILURE);
     }
-    printf("syscall mmap success master weasel\n");
+    printf("mmap call success master weasel\n");
 
     arena->base = (char *)(arena + 1); // skip arena struct
     arena->used = arena->base;
