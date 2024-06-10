@@ -328,7 +328,7 @@ int main()
             continue;
         }
 
-        sscanf(buffer, "%s %s %s", method, uri, version);   // need to refactor to gets or whatever
+        sscanf(buffer, "%s %s %s", method, uri, version); // need to refactor to gets or whatever
 
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
                ntohs(client_addr.sin_port), method, version, uri);

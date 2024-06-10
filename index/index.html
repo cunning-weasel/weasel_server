@@ -6,7 +6,6 @@
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
   <title>weasel-quake</title>
   <link rel="shortcut icon" href="#" />
-  <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.8.5/dist/nipplejs.min.js"></script>
   <style>
     body {
       background-color: #202020;
@@ -68,53 +67,7 @@
     /* mobile controls */
     .joystick-container {
       width: 30vw;
-      height: 30vh;
       position: relative;
-    }
-
-    .set {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      height: 25vh;
-    }
-
-    .outline {
-      border: 2px solid white;
-      padding: 20px;
-      border-radius: 15px;
-    }
-
-    .d-pad,
-    .o-pad {
-      display: grid;
-      gap: 10px;
-      height: 15vh;
-      width: 30vw;
-    }
-
-    .d-pad {
-      grid-template-rows: repeat(3, 1fr);
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .d-pad .buttonUp,
-    .d-pad .buttonDown,
-    .o-pad .buttonLookUp,
-    .o-pad .buttonLookDown {
-      grid-column: 2;
-    }
-
-    .d-pad .buttonRight,
-    .o-pad .buttonLookRight {
-      grid-row: 2;
-      grid-column: 3;
-    }
-
-    .d-pad .buttonLeft,
-    .o-pad .buttonLookLeft {
-      grid-row: 2;
-      grid-column: 1;
     }
 
     .shoulderButtons {
@@ -123,16 +76,7 @@
       margin-bottom: 20px;
     }
 
-    .buttonUp,
-    .buttonDown,
-    .buttonLookUp,
-    .buttonLookDown,
-    .buttonRight,
-    .buttonLeft,
-    .buttonLookRight,
-    .buttonLookLeft,
-    #buttonAttack,
-    #buttonJump {
+    .button {
       background-color: #202020;
       color: #e0e0e0;
       border: 2px solid #e0e0e0;
@@ -197,14 +141,38 @@
   </div>
   <textarea class="emscripten" id="output" readonly></textarea><canvas class="emscripten" id="canvas"
     oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
-  <div class="set outline">
-    <div id="leftJoystickContainer" class="joystick-container"></div>
-    <div class="shoulderButtons">
-      <button id="buttonAttack">Atck</button>
-      <button id="buttonJump">Jmp</button>
+  <!-- joystick mobile controls -->
+  <div class="joystick-container">
+    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
+    <div id="stick1" style="position: absolute; left:32px; top:32px;">
+      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-red.png" />
     </div>
-    <div id="rightJoystickContainer" class="joystick-container"></div>
   </div>
+
+  <div class="joystick-container">
+    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
+    <div id="stick2" style="position: absolute; left:32px; top:32px;">
+      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-blue.png" />
+    </div>
+  </div>
+  <div class="shoulderButtons">
+    <button id="buttonAttack">Atck</button>
+    <button id="buttonJump">Jmp</button>
+  </div>
+
+  <!-- <div style="border: 1px solid red; width: 128px; position: absolute; left:10px; top:150px;">
+    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
+    <div id="stick1" style="position: absolute; left:32px; top:32px;">
+      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-red.png" />
+    </div>
+  </div>
+
+  <div style="border: 1px solid blue; width: 128px; position: absolute; left:210px; top:150px;">
+    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
+    <div id="stick2" style="position: absolute; left:32px; top:32px;">
+      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-blue.png" />
+    </div>
+  </div> -->
 
   <script>
     var statusElement = document.getElementById("status"),
@@ -298,319 +266,216 @@
       });
 
     /*
-    mobile controls mapping kb + mouse
-    events to touch events
-  */
+      mobile controls mapping kb + mouse
+      events to touch events
+    */
 
-document.addEventListener("DOMContentLoaded", function() {
-  // Joystick setup using nipple.js
-  const joystickOptions = {
-    zone: document.getElementById('leftJoystickContainer'),
-    mode: 'static',
-    position: { left: '50%', top: '50%' },
-    color: 'white',
-  };
-  
-  const lookJoystickOptions = {
-    zone: document.getElementById('rightJoystickContainer'),
-    mode: 'static',
-    position: { left: '50%', top: '50%' },
-    color: 'white',
-  };
+    const SPACEBAR_KEYCODE = 32;
+    const CTRL_KEYCODE = 17;
+    const UP_KEYCODE = 87;
+    const DOWN_KEYCODE = 83;
+    const LEFT_KEYCODE = 65;
+    const RIGHT_KEYCODE = 68;
+    // just in case mouse movement doesn't work
+    // const LOOK_UP_KEYCODE = 38;
+    // const LOOK_DOWN_KEYCODE = 40;
+    // const LOOK_LEFT_KEYCODE = 37;
+    // const LOOK_RIGHT_KEYCODE = 39;
 
-  const movementJoystick = nipplejs.create(joystickOptions);
-  const lookJoystick = nipplejs.create(lookJoystickOptions);
+    const keyEvent = (evType, keyCode) => {
+      const ev = new KeyboardEvent(evType, {
+        keyCode: keyCode,
+        which: keyCode,
+        bubbles: true
+      });
+      window.dispatchEvent(ev);
+    };
 
-  const keyEvent = (evType, keyCode) => {
-    const ev = new KeyboardEvent(evType, {
-      keyCode: keyCode,
-      which: keyCode,
-      bubbles: true
+    // jmp & attack buttons
+    const jmpDiv = document.getElementById("buttonJump");
+    const attDiv = document.getElementById("buttonAttack");
+
+    jmpDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      keyEvent("keydown", SPACEBAR_KEYCODE);
     });
-    window.dispatchEvent(ev);
-  };
 
-  const SPACEBAR_KEYCODE = 32;
-  const CTRL_KEYCODE = 17;
-  const UP_KEYCODE = 87;
-  const DOWN_KEYCODE = 83;
-  const LEFT_KEYCODE = 65;
-  const RIGHT_KEYCODE = 68;
-  const LOOK_UP_KEYCODE = 38;
-  const LOOK_DOWN_KEYCODE = 40;
-  const LOOK_LEFT_KEYCODE = 37;
-  const LOOK_RIGHT_KEYCODE = 39;
+    jmpDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      keyEvent("keyup", SPACEBAR_KEYCODE);
+    });
 
-  movementJoystick.on('move', function (evt, data) {
-    const angle = data.angle.degree;
+    attDiv.addEventListener("touchstart", (ev) => {
+      ev.preventDefault();
+      keyEvent("keydown", CTRL_KEYCODE);
+    });
 
-    if (angle > 45 && angle < 135) {
-      keyEvent('keydown', DOWN_KEYCODE);
-    } else if (angle > 225 && angle < 315) {
-      keyEvent('keydown', UP_KEYCODE);
-    } else if (angle > 135 && angle < 225) {
-      keyEvent('keydown', LEFT_KEYCODE);
-    } else if ((angle > 0 && angle < 45) || (angle > 315 && angle < 360)) {
-      keyEvent('keydown', RIGHT_KEYCODE);
+    attDiv.addEventListener("touchend", (ev) => {
+      ev.preventDefault();
+      keyEvent("keyup", CTRL_KEYCODE);
+    });
+
+    class JoystickController {
+      // stickID: ID of HTML element (representing joystick) that will be dragged
+      // maxDistance: maximum amount joystick can move in any direction
+      // deadzone: joystick must move at least this amount from origin to register value change
+      constructor(stickID, maxDistance, deadzone) {
+        this.id = stickID;
+        let stick = document.getElementById(stickID);
+
+        // location from which drag begins, used to calculate offsets
+        this.dragStart = null;
+
+        // track touch identifier in case multiple joysticks present
+        this.touchId = null;
+
+        this.active = false;
+        this.value = { x: 0, y: 0 };
+
+        let self = this;
+
+        function handleDown(event) {
+          self.active = true;
+
+          // all drag movements are instantaneous
+          stick.style.transition = "0s";
+
+          // touch event fired before mouse event; prevent redundant mouse event from firing
+          event.preventDefault();
+
+          if (event.changedTouches)
+            self.dragStart = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
+          else
+            self.dragStart = { x: event.clientX, y: event.clientY };
+
+          // if this is a touch event, keep track of which one
+          if (event.changedTouches)
+            self.touchId = event.changedTouches[0].identifier;
+        }
+
+        function handleMove(event) {
+          if (!self.active) return;
+
+          // if this is a touch event, make sure it is the right one
+          // also handle multiple simultaneous touchmove events
+          let touchmoveId = null;
+          if (event.changedTouches) {
+            for (let i = 0; i < event.changedTouches.length; i++) {
+              if (self.touchId == event.changedTouches[i].identifier) {
+                touchmoveId = i;
+                event.clientX = event.changedTouches[i].clientX;
+                event.clientY = event.changedTouches[i].clientY;
+              }
+            }
+
+            if (touchmoveId == null) return;
+          }
+
+          const xDiff = event.clientX - self.dragStart.x;
+          const yDiff = event.clientY - self.dragStart.y;
+          const angle = Math.atan2(yDiff, xDiff);
+          const distance = Math.min(maxDistance, Math.hypot(xDiff, yDiff));
+          const xPosition = distance * Math.cos(angle);
+          const yPosition = distance * Math.sin(angle);
+
+          // move stick image to new position
+          stick.style.transform = `translate3d(${xPosition}px, ${yPosition}px, 0px)`;
+
+          // deadzone adjustment
+          const distance2 = (distance < deadzone) ? 0 : maxDistance / (maxDistance - deadzone) * (distance - deadzone);
+          const xPosition2 = distance2 * Math.cos(angle);
+          const yPosition2 = distance2 * Math.sin(angle);
+          const xPercent = parseFloat((xPosition2 / maxDistance).toFixed(4));
+          const yPercent = parseFloat((yPosition2 / maxDistance).toFixed(4));
+
+          self.value = { x: xPercent, y: yPercent };
+        }
+
+        function handleUp(event) {
+          if (!self.active) return;
+
+          // if this is a touch event, make sure it is the right one
+          if (event.changedTouches && self.touchId != event.changedTouches[0].identifier) return;
+
+          // transition the joystick position back to center
+          stick.style.transition = ".2s";
+          stick.style.transform = `translate3d(0px, 0px, 0px)`;
+
+          // reset everything
+          self.value = { x: 0, y: 0 };
+          self.touchId = null;
+          self.active = false;
+        }
+
+        stick.addEventListener("touchstart", handleDown);
+        document.addEventListener("touchmove", handleMove, { passive: false });
+        document.addEventListener("touchend", handleUp);
+      }
     }
-  });
 
-  movementJoystick.on('end', function () {
-    keyEvent('keyup', UP_KEYCODE);
-    keyEvent('keyup', DOWN_KEYCODE);
-    keyEvent('keyup', LEFT_KEYCODE);
-    keyEvent('keyup', RIGHT_KEYCODE);
-  });
+    let leftJoystick = new JoystickController("stick1", 64, 8);
+    let rightJoystick = new JoystickController("stick2", 64, 8);
 
-  lookJoystick.on('move', function (evt, data) {
-    const angle = data.angle.degree;
+    // To-Do: fix as this breaks keyboard controls
+    function mapJoystickToMouse(joystick) {
+      const { x, y } = joystick.value;
+      console.log("x, y:", x, y);
+      // simulate mouse movement
+      const movementX = x * 10; // adjust the multiplier for sensitivity
+      const movementY = y * 10;
 
-    if (angle > 45 && angle < 135) {
-      keyEvent('keydown', LOOK_DOWN_KEYCODE);
-    } else if (angle > 225 && angle < 315) {
-      keyEvent('keydown', LOOK_UP_KEYCODE);
-    } else if (angle > 135 && angle < 225) {
-      keyEvent('keydown', LOOK_LEFT_KEYCODE);
-    } else if ((angle > 0 && angle < 45) || (angle > 315 && angle < 360)) {
-      keyEvent('keydown', LOOK_RIGHT_KEYCODE);
+      const event = new MouseEvent("mousemove", {
+        movementX,
+        movementY,
+        bubbles: true
+      });
+      window.dispatchEvent(event);
     }
-  });
 
-  lookJoystick.on('end', function () {
-    keyEvent('keyup', LOOK_UP_KEYCODE);
-    keyEvent('keyup', LOOK_DOWN_KEYCODE);
-    keyEvent('keyup', LOOK_LEFT_KEYCODE);
-    keyEvent('keyup', LOOK_RIGHT_KEYCODE);
-  });
+    canvasElement.addEventListener("mousemove", setCoords);
 
-  const jmpDiv = document.getElementById("buttonJump");
-  const attDiv = document.getElementById("buttonAttack");
+    function setCoords(e) {
+      console.log(`Offset X/Y: ${e.offsetX}, ${e.offsetY}
+                   Viewport X/Y: ${e.clientX}, ${e.clientY}
+                   Page X/Y: ${e.pageX}, ${e.pageY}
+                   Screen X/Y: ${e.screenX}, ${e.screenY}`);
+    }
 
-  jmpDiv.addEventListener("touchstart", (ev) => {
-    ev.preventDefault();
-    keyEvent("keydown", SPACEBAR_KEYCODE);
-  });
+    function mapJoystickToWASD(joystick) {
+      const { x, y } = joystick.value;
+      // calculate the direction
+      if (y < -0.5) {
+        keyEvent("keydown", UP_KEYCODE);
+      } else if (y > 0.5) {
+        keyEvent("keydown", DOWN_KEYCODE);
+      } else {
+        keyEvent("keyup", UP_KEYCODE);
+        keyEvent("keyup", DOWN_KEYCODE);
+      }
 
-  jmpDiv.addEventListener("touchend", (ev) => {
-    ev.preventDefault();
-    keyEvent("keyup", SPACEBAR_KEYCODE);
-  });
+      if (x < -0.5) {
+        keyEvent("keydown", LEFT_KEYCODE);
+      } else if (x > 0.5) {
+        keyEvent("keydown", RIGHT_KEYCODE);
+      } else {
+        keyEvent("keyup", LEFT_KEYCODE);
+        keyEvent("keyup", RIGHT_KEYCODE);
+      }
+    }
 
-  attDiv.addEventListener("touchstart", (ev) => {
-    ev.preventDefault();
-    keyEvent("keydown", CTRL_KEYCODE);
-  });
+    const update = () => {
+      // console.log("leftJoystick: " + JSON.stringify(leftJoystick.value));
+      // console.log("rightJoystick: " + JSON.stringify(rightJoystick.value));
+      mapJoystickToMouse(leftJoystick);
+      mapJoystickToWASD(rightJoystick);
+    }
 
-  attDiv.addEventListener("touchend", (ev) => {
-    ev.preventDefault();
-    keyEvent("keyup", CTRL_KEYCODE);
-  });
-});
+    const loop = () => {
+      requestAnimationFrame(loop);
+      update();
+    }
+    loop();
 
-
-
-    // const upDiv = document.querySelector(".buttonUp");
-    // const downDiv = document.querySelector(".buttonDown");
-    // const leftDiv = document.querySelector(".buttonLeft");
-    // const rightDiv = document.querySelector(".buttonRight");
-
-    // const jmpDiv = document.getElementById("buttonJump");
-    // const attDiv = document.getElementById("buttonAttack");
-
-    // const lookUpDiv = document.querySelector(".buttonLookUp");
-    // const lookDownDiv = document.querySelector(".buttonLookDown");
-    // const lookLeftDiv = document.querySelector(".buttonLookLeft");
-    // const lookRightDiv = document.querySelector(".buttonLookRight");
-
-    // const mvUp = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "KeyW",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const mvDown = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "KeyS",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const mvLeft = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "KeyS",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const mvRight = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "KeyS",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const jumpHandler = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "Space" || "Enter",
-    //   });
-    //   window.dispatchEvent(ev); // smh
-    // };
-
-    // const attHandler = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "ControlLeft" || "ControlRight",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const lookUp = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "KeyO",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const lookDown = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "KeyL",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const lookLeft = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "ArrowLeft",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // const lookRight = (evType, keyCode) => {
-    //   const ev = new KeyboardEvent(evType, {
-    //     keyCode: keyCode,
-    //     which: keyCode,
-    //     code: "ArrowRight",
-    //   });
-    //   window.dispatchEvent(ev);
-    // };
-
-    // upDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvUp("keydown", UP_KEYCODE);
-    // });
-
-    // upDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvUp("keyup", UP_KEYCODE);
-    // });
-
-    // downDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvDown("keydown", DOWN_KEYCODE);
-    // });
-
-    // downDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvDown("keyup", DOWN_KEYCODE);
-    // });
-
-    // leftDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvLeft("keydown", LEFT_KEYCODE);
-    // });
-
-    // leftDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvLeft("keyup", LEFT_KEYCODE);
-    // });
-
-    // rightDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvRight("keydown", RIGHT_KEYCODE);
-    // });
-
-    // rightDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvRight("keyup", RIGHT_KEYCODE);
-    // });
-
-    // jmpDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   jumpHandler("keydown", SPACEBAR_KEYCODE);
-    // });
-
-    // jmpDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   jumpHandler("keyup", SPACEBAR_KEYCODE);
-    // });
-
-    // attDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   attHandler("keydown", CTRL_KEYCODE);
-    // });
-
-    // attDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   attHandler("keyup", CTRL_KEYCODE);
-    // });
-
-    // lookUpDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvUp("keydown", LOOK_UP_KEYCODE);
-    // });
-
-    // lookUpDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvUp("keyup", LOOK_UP_KEYCODE);
-    // });
-
-    // lookDownDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvDown("keydown", LOOK_DOWN_KEYCODE);
-    // });
-
-    // lookDownDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvDown("keyup", LOOK_DOWN_KEYCODE);
-    // });
-
-    // lookLeftDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvLeft("keydown", LOOK_LEFT_KEYCODE);
-    // });
-
-    // lookLeftDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvLeft("keyup", LOOK_LEFT_KEYCODE);
-    // });
-
-    // lookRightDiv.addEventListener("touchstart", (ev) => {
-    //   ev.preventDefault();
-    //   mvRight("keydown", LOOK_RIGHT_KEYCODE);
-    // });
-
-    // lookRightDiv.addEventListener("touchend", (ev) => {
-    //   ev.preventDefault();
-    //   mvRight("keyup", LOOK_RIGHT_KEYCODE);
-    // });
   </script>
   <script async src="index.js"></script>
 </body>
