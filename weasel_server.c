@@ -9,6 +9,7 @@
 #include <time.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
+#include <bits/mman-linux.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 60000
@@ -76,9 +77,11 @@ Arena *create_arena(size_t size)
 
     if (arena == MAP_FAILED)
     {
+        perror("mmap syscall failure master weasel\n");
         perror("mmap call failure master weasel\n");
         exit(EXIT_FAILURE);
     }
+    printf("mmap  success master weasel\n");
     printf("mmap call success master weasel\n");
 
     arena->base = (char *)(arena + 1); // skip arena struct
@@ -116,7 +119,7 @@ void arena_release(Arena *arena)
 {
     if (munmap(arena, sizeof(Arena) + arena->size) == -1)
     {
-        perror("munmap sys error master weasel\n");
+        perror("munmap error master weasel\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -325,7 +328,7 @@ int main()
             continue;
         }
 
-        sscanf(buffer, "%s %s %s", method, uri, version);
+        sscanf(buffer, "%s %s %s", method, uri, version);   // need to refactor to gets or whatever
 
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
                ntohs(client_addr.sin_port), method, version, uri);
