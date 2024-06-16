@@ -11,7 +11,7 @@ compile_and_execute() {
     if [ $? -eq 0 ]; then
         ./output_weasel_server
     else
-        echo "Compilation failed."
+        echo "big shit on compilation"
     fi
 }
 
