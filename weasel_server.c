@@ -147,6 +147,7 @@ void arena_release(Arena *arena)
 //     {".js", "text/javascript"},
 //     {".html", "text/html"},
 //     // data file...
+//     // imgs n shit..?
 // };
 
 // const char *get_content_type(const char *uri) {
@@ -243,7 +244,7 @@ void send_full_res(int newsockfd, char *content, char *content_type, size_t cont
     }
 }
 
-int main()
+int main(void)
 {
     size_t arena_size = 500 * 1024 * 1024; // 500MB
     Arena *arena = create_arena(arena_size);
@@ -328,7 +329,7 @@ int main()
             continue;
         }
 
-        sscanf(buffer, "%s %s %s", method, uri, version); // need to refactor to gets or whatever
+        sscanf(buffer, "%s %s %s", method, uri, version); // To-Do: need to refactor to gets or whatever
 
         printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
                ntohs(client_addr.sin_port), method, version, uri);
