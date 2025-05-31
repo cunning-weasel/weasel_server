@@ -137,8 +137,8 @@ void arena_release(Arena *arena)
 // TO-DO: roll own file handler
 // need to look at sys calls
 // typedef struct {
-//     const char *extension;
-//     const char *content_type;
+//     char *extension;
+//     char *content_type;
 // } ContentTypeMapping;
 
 // // mappings
@@ -150,7 +150,7 @@ void arena_release(Arena *arena)
 //     // imgs n shit..?
 // };
 
-// const char *get_content_type(const char *uri) {
+// char *get_content_type(char *uri) {
 //     // ...
 // }
 

@@ -485,10 +485,12 @@
 
     function mapJoystickToMouse(joystick) {
       // only map if this is the right joystick
-      if (joystick.id !== "stick2") { return };
+      if (joystick.id !== "stick2") {
+        return
+      };
       const { x, y } = joystick.value;
-      // look speed multiplier here
-      const lookMultiplier = 24;
+      const lookMultiplier = 24;    // mapped-mouse "look" speed multiplier
+
       if (Math.abs(x) > 0.1 || Math.abs(y) > 0.1) {
         const pointerEvent = new PointerEvent("pointermove", {
           movementX: x * lookMultiplier,
@@ -513,7 +515,7 @@
       }
     }
 
-    // track key state to avoid spamming key events
+    // key state avoided lots of shit
     const wasdState = {
       [UP_KEYCODE]: false,
       [DOWN_KEYCODE]: false,

@@ -23,7 +23,7 @@ const registerServiceWorker = async () => {
         }
     }
 };
-// registerServiceWorker();
+registerServiceWorker();
 
 const cacheAssets = async (assets) => {
     const cache = await caches.open(cacheName);
