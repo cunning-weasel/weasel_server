@@ -1,5 +1,10 @@
 "use strict";
 
+let db;
+let cacheName = "weasel_cache-v1";
+const dbName = "weasel_multiplayer-v1";
+const storeName = "multiplayer-store";
+
 const registerServiceWorker = async () => {
     if ("serviceWorker" in navigator) {
         try {
@@ -18,12 +23,7 @@ const registerServiceWorker = async () => {
         }
     }
 };
-registerServiceWorker();
-
-let db;
-let cacheName = "weasel_cache-v1";
-const dbName = "weasel_multiplayer-v1";
-const storeName = "multiplayer-store";
+// registerServiceWorker();
 
 const cacheAssets = async (assets) => {
     const cache = await caches.open(cacheName);

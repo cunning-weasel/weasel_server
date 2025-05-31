@@ -64,28 +64,84 @@
       background-color: #202020;
     }
 
-    /* mobile controls */
+    /* mobile controls - modern FPS layout, always visible, fixed position */
     .joystick-container {
-      width: 30vw;
-      position: relative;
+      position: fixed;
+      width: 128px;
+      height: 128px;
+      z-index: 1000;
+      opacity: 1;
+      pointer-events: auto;
+      user-select: none;
+    }
+
+    #left-joystick {
+      left: 20px;
+      bottom: 20px;
+    }
+
+    #right-joystick {
+      right: 20px;
+      bottom: 20px;
+    }
+
+    .joystick-base {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .joystick-stick {
+      width: 64px;
+      height: 64px;
+      position: absolute;
+      left: 32px;
+      top: 32px;
+      z-index: 2;
+      pointer-events: auto;
+      touch-action: none;
     }
 
     .shoulderButtons {
+      position: fixed;
+      right: 36px;
+      bottom: 170px;
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
+      flex-direction: column;
+      gap: 18px;
+      z-index: 1001;
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    .button {
-      background-color: #202020;
-      color: #e0e0e0;
+    .shoulderButtons button {
+      background: rgba(32, 32, 32, 0.85);
+      color: #fff;
       border: 2px solid #e0e0e0;
-      padding: 15px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
       border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 0;
+      box-shadow: 0 2px 8px #0008;
+      touch-action: none;
+      pointer-events: auto;
+      transition: background 0.2s;
+    }
+
+    .shoulderButtons button:active {
+      background: #444;
+    }
+
+    html,
+    body {
+      overscroll-behavior: contain;
+      touch-action: none;
     }
 
     @-webkit-keyframes rotation {
@@ -133,7 +189,7 @@
 <body>
   <figure id="spinner" style="overflow: visible">
     <div class="spinner"></div>
-    <center style="margin-top: 0.5em"><strong>weasel-quake</strong></center>
+    <div style="margin-top: 0.5em"><strong>weasel-quake</strong></div>
   </figure>
   <div class="emscripten" id="status">loading...</div>
   <div class="emscripten">
@@ -142,37 +198,22 @@
   <textarea class="emscripten" id="output" readonly></textarea><canvas class="emscripten" id="canvas"
     oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
   <!-- joystick mobile controls -->
-  <div class="joystick-container">
-    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
-    <div id="stick1" style="position: absolute; left: 32px; top: 32px;">
-      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-red.png" />
+  <div class="joystick-container" id="left-joystick">
+    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" class="joystick-base" />
+    <div id="stick1" class="joystick-stick" style="position: absolute; left: 32px; top: 32px;">
+      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-red.png" style="width:100%;height:100%;" />
     </div>
   </div>
-
-  <div class="joystick-container">
-    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
-    <div id="stick2" style="position: absolute; left: 32px; top: 32px;">
-      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-blue.png" />
+  <div class="joystick-container" id="right-joystick">
+    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" class="joystick-base" />
+    <div id="stick2" class="joystick-stick" style="position: absolute; left: 32px; top: 32px;">
+      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-blue.png" style="width:100%;height:100%;" />
     </div>
   </div>
   <div class="shoulderButtons">
     <button id="buttonAttack">Atck</button>
     <button id="buttonJump">Jmp</button>
   </div>
-
-  <!-- <div style="border: 1px solid red; width: 128px; position: absolute; left:10px; top:150px;">
-    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
-    <div id="stick1" style="position: absolute; left:32px; top:32px;">
-      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-red.png" />
-    </div>
-  </div>
-
-  <div style="border: 1px solid blue; width: 128px; position: absolute; left:210px; top:150px;">
-    <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-base.png" />
-    <div id="stick2" style="position: absolute; left:32px; top:32px;">
-      <img src="https://stemkoski.github.io/HTML-Joysticks/images/joystick-blue.png" />
-    </div>
-  </div> -->
 
   <script>
     var statusElement = document.getElementById("status"),
@@ -276,11 +317,10 @@
     const DOWN_KEYCODE = 83;
     const LEFT_KEYCODE = 65;
     const RIGHT_KEYCODE = 68;
-    // just in case mouse movement doesn't work
-    // const LOOK_UP_KEYCODE = 38;
-    // const LOOK_DOWN_KEYCODE = 40;
-    // const LOOK_LEFT_KEYCODE = 37;
-    // const LOOK_RIGHT_KEYCODE = 39;
+    const LOOK_UP_KEYCODE = 38;
+    const LOOK_DOWN_KEYCODE = 40;
+    const LOOK_LEFT_KEYCODE = 37;
+    const LOOK_RIGHT_KEYCODE = 39;
 
     const keyEvent = (evType, keyCode) => {
       const ev = new KeyboardEvent(evType, {
@@ -413,68 +453,123 @@
       }
     }
 
-    let leftJoystick = new JoystickController("stick1", 64, 8);
-    let rightJoystick = new JoystickController("stick2", 64, 8);
-
-    // To-Do: fix as this breaks keyboard controls
-    function mapJoystickToMouse(joystick) {
-      const { x, y } = joystick.value;
-      console.log("x, y:", x, y);
-      // simulate mouse movement
-      const movementX = x * 10; // adjust the multiplier for sensitivity
-      const movementY = y * 10;
-
-      const event = new MouseEvent("mousemove", {
-        movementX,
-        movementY,
-        bubbles: true
-      });
-      window.dispatchEvent(event);
+    function isTouchDevice() {
+      return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     }
 
-    canvasElement.addEventListener("mousemove", setCoords);
+    document.addEventListener("DOMContentLoaded", function () {
+      let leftJoystick = new JoystickController("stick1", 64, 8);
+      let rightJoystick = new JoystickController("stick2", 64, 8);
 
-    function setCoords(e) {
-      console.log(`Offset X/Y: ${e.offsetX}, ${e.offsetY}
-                   Viewport X/Y: ${e.clientX}, ${e.clientY}
-                   Page X/Y: ${e.pageX}, ${e.pageY}
-                   Screen X/Y: ${e.screenX}, ${e.screenY}`);
+      const update = () => {
+        if (isTouchDevice()) {
+          mapJoystickToMouse(rightJoystick); // right - look only
+          mapJoystickToWASD(leftJoystick);   // left - move only
+        }
+      };
+
+      const loop = () => {
+        requestAnimationFrame(loop);
+        update();
+      };
+      loop();
+
+      // prevent canvas touches from triggering attack/mouse if on joystick/button
+      canvasElement.addEventListener("touchstart", function (ev) {
+        if (ev.target.closest('.joystick-container') || ev.target.closest('.shoulderButtons')) {
+          ev.stopPropagation();
+          return;
+        }
+      }, { passive: false });
+    });
+
+    function mapJoystickToMouse(joystick) {
+      // only map if this is the right joystick
+      if (joystick.id !== "stick2") { return };
+      const { x, y } = joystick.value;
+      // look speed multiplier here
+      const lookMultiplier = 24;
+      if (Math.abs(x) > 0.1 || Math.abs(y) > 0.1) {
+        const pointerEvent = new PointerEvent("pointermove", {
+          movementX: x * lookMultiplier,
+          movementY: y * lookMultiplier,
+          bubbles: true,
+          pointerType: "touch"
+        });
+        canvasElement.dispatchEvent(pointerEvent);
+        const mouseEvent = new MouseEvent("mousemove", {
+          movementX: x * lookMultiplier,
+          movementY: y * lookMultiplier,
+          bubbles: true
+        });
+        canvasElement.dispatchEvent(mouseEvent);
+      } else {
+        const mouseEvent = new MouseEvent("mousemove", {
+          movementX: 0,
+          movementY: 0,
+          bubbles: true
+        });
+        canvasElement.dispatchEvent(mouseEvent);
+      }
+    }
+
+    // track key state to avoid spamming key events
+    const wasdState = {
+      [UP_KEYCODE]: false,
+      [DOWN_KEYCODE]: false,
+      [LEFT_KEYCODE]: false,
+      [RIGHT_KEYCODE]: false
+    };
+
+    function setKeyState(key, pressed) {
+      if (wasdState[key] !== pressed) {
+        keyEvent(pressed ? "keydown" : "keyup", key);
+        wasdState[key] = pressed;
+      }
     }
 
     function mapJoystickToWASD(joystick) {
       const { x, y } = joystick.value;
-      // calculate the direction
+      // only map if this is the left joystick
+      if (joystick.id !== "stick1") return;
+      // up/down
       if (y < -0.5) {
-        keyEvent("keydown", UP_KEYCODE);
+        setKeyState(UP_KEYCODE, true);
+        setKeyState(DOWN_KEYCODE, false);
       } else if (y > 0.5) {
-        keyEvent("keydown", DOWN_KEYCODE);
+        setKeyState(DOWN_KEYCODE, true);
+        setKeyState(UP_KEYCODE, false);
       } else {
-        keyEvent("keyup", UP_KEYCODE);
-        keyEvent("keyup", DOWN_KEYCODE);
+        setKeyState(UP_KEYCODE, false);
+        setKeyState(DOWN_KEYCODE, false);
       }
 
+      // left/right
       if (x < -0.5) {
-        keyEvent("keydown", LEFT_KEYCODE);
+        setKeyState(LEFT_KEYCODE, true);
+        setKeyState(RIGHT_KEYCODE, false);
       } else if (x > 0.5) {
-        keyEvent("keydown", RIGHT_KEYCODE);
+        setKeyState(RIGHT_KEYCODE, true);
+        setKeyState(LEFT_KEYCODE, false);
       } else {
-        keyEvent("keyup", LEFT_KEYCODE);
-        keyEvent("keyup", RIGHT_KEYCODE);
+        setKeyState(LEFT_KEYCODE, false);
+        setKeyState(RIGHT_KEYCODE, false);
       }
     }
 
-    const update = () => {
-      // console.log("leftJoystick: " + JSON.stringify(leftJoystick.value));
-      // console.log("rightJoystick: " + JSON.stringify(rightJoystick.value));
-      mapJoystickToMouse(leftJoystick);
-      mapJoystickToWASD(rightJoystick);
-    }
+    const lookState = {
+      [LOOK_UP_KEYCODE]: false,
+      [LOOK_DOWN_KEYCODE]: false,
+      [LOOK_LEFT_KEYCODE]: false,
+      [LOOK_RIGHT_KEYCODE]: false
+    };
 
-    const loop = () => {
-      requestAnimationFrame(loop);
-      update();
+    function setLookKeyState(key, pressed) {
+      if (lookState[key] !== pressed) {
+        keyEvent(pressed ? "keydown" : "keyup", key);
+        lookState[key] = pressed;
+      }
     }
-    loop();
 
   </script>
   <script async src="index.js"></script>
